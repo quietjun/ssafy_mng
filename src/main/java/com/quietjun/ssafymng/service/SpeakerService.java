@@ -181,6 +181,20 @@ public class SpeakerService {
         return true;
     }
 
+    @Transactional
+    public boolean saveSeatLayout(List<StudentDto> studentList) {
+        if (studentList == null) return false;
+        for (StudentDto dto : studentList) {
+            if (dto.getSno() == null) continue;
+            studentRepository.findById(dto.getSno()).ifPresent(s -> {
+                s.setSrow(dto.getSrow());
+                s.setScol(dto.getScol());
+                studentRepository.save(s);
+            });
+        }
+        return true;
+    }
+
     @Transactional(readOnly = true)
     public StudentDto drawSpeaker(List<String> candidateSnos) {
         List<Student> students = studentRepository.findByRoleAndEscapeFalse(Role.ROLE_STUDENT);

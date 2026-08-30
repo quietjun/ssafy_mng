@@ -8,6 +8,9 @@
         <button class="btn btn-secondary" @click="shuffleSeats">
           <span>🔀</span> 시험배치 (셔플)
         </button>
+        <button :class="['btn', isMoveMode ? 'btn-danger' : 'btn-outline']" @click="toggleMoveMode">
+          <span>✋</span> {{ isMoveMode ? '좌석이동 모드 종료' : '좌석 이동 / 맞교환' }}
+        </button>
         <button class="btn btn-success" @click="isRotated = !isRotated">
           <span>🔄</span> 시점 전환
         </button>
@@ -21,6 +24,15 @@
 
       <div class="view-direction-badge" @click="isRotated = !isRotated">
         {{ isRotated ? '👨‍🎓 STUDENT VIEW (강단을 바라보는 학생 시점)' : '👨‍🏫 TEACHER VIEW (학생을 바라보는 강사 시점)' }}
+      </div>
+    </div>
+
+    <!-- 좌석 이동 모드 알림 배너 -->
+    <div v-if="isMoveMode" class="alert-banner info mb-3">
+      <div class="alert-content">
+        <span>💡</span>
+        <span><b>좌석 이동 모드</b>: 학생 카드를 원하는 자리로 <b>드래그 앤 드롭</b>하거나, <b>클릭(선택) 후 이동할 자리(클릭)</b>를 선택하면 자리가 이동/맞교환됩니다.</span>
+        <span v-if="selectedSeatForMove" class="badge badge-warning ml-2">선택됨: ({{ selectedSeatForMove.r + 1 }}행 {{ selectedSeatForMove.c + 1 }}열)</span>
       </div>
     </div>
 
@@ -65,24 +77,44 @@
               <div 
                 v-for="colIdx in sec" 
                 :key="colIdx" 
-                class="seat-cell"
+                :class="['seat-cell', {
+                  'drag-target-over': dragTargetOver && dragTargetOver.r === (rowIdx - 1) && dragTargetOver.c === colIdx,
+                  'move-selected-cell': selectedSeatForMove && selectedSeatForMove.r === (rowIdx - 1) && selectedSeatForMove.c === colIdx
+                }]"
+                @dragover.prevent="onDragOver(rowIdx - 1, colIdx)"
+                @dragleave="onDragLeave(rowIdx - 1, colIdx)"
+                @drop.prevent="onDrop(rowIdx - 1, colIdx)"
+                @click="handleSeatCellClick(rowIdx - 1, colIdx)"
               >
+                <!-- 학생이 앉아있는 좌석 카드 -->
                 <div 
                   v-if="getStudentAt(rowIdx - 1, colIdx)" 
                   :class="['seat-card', { 
                     selected: candidateMap[getStudentAt(rowIdx - 1, colIdx)!.sno],
                     winner: winnerSno === getStudentAt(rowIdx - 1, colIdx)!.sno,
-                    highlight: highlightSno === getStudentAt(rowIdx - 1, colIdx)!.sno
+                    highlight: highlightSno === getStudentAt(rowIdx - 1, colIdx)!.sno,
+                    'is-dragging': draggedSeat && draggedSeat.r === (rowIdx - 1) && draggedSeat.c === colIdx,
+                    'is-move-selected': selectedSeatForMove && selectedSeatForMove.r === (rowIdx - 1) && selectedSeatForMove.c === colIdx
                   }]"
-                  @click="toggleCandidate(getStudentAt(rowIdx - 1, colIdx)!.sno)"
+                  :draggable="true"
+                  @dragstart="onDragStart($event, rowIdx - 1, colIdx)"
+                  @dragend="onDragEnd"
                 >
                   <div class="seat-sno">{{ getStudentAt(rowIdx - 1, colIdx)!.sno }}</div>
                   <div class="seat-name">{{ getStudentAt(rowIdx - 1, colIdx)!.name }}</div>
                   <div class="seat-meta">
                     <span class="seat-point">Lv.{{ getStudentAt(rowIdx - 1, colIdx)!.presentationPoint || 1 }}</span>
+                    <span class="seat-drag-handle" title="드래그하여 이동">⋮⋮</span>
                   </div>
                 </div>
-                <div v-else class="seat-empty">
+
+                <!-- 빈자리 -->
+                <div 
+                  v-else 
+                  :class="['seat-empty', {
+                    'drag-target-active': dragTargetOver && dragTargetOver.r === (rowIdx - 1) && dragTargetOver.c === colIdx
+                  }]"
+                >
                   빈자리
                 </div>
               </div>
@@ -146,6 +178,12 @@ const highlightSno = ref<string | null>(null)
 const winnerSno = ref<string | null>(null)
 const winner = ref<StudentSeat | null>(null)
 
+// 좌석 이동 / 맞교환 관련 상태
+const isMoveMode = ref(false)
+const draggedSeat = ref<{ r: number; c: number } | null>(null)
+const dragTargetOver = ref<{ r: number; c: number } | null>(null)
+const selectedSeatForMove = ref<{ r: number; c: number } | null>(null)
+
 onMounted(async () => {
   if (!authStore.isAdmin) {
     router.push('/assignment')
@@ -153,6 +191,122 @@ onMounted(async () => {
   }
   await loadLayout()
 })
+
+// 좌석 이동 모드 토글
+function toggleMoveMode() {
+  isMoveMode.value = !isMoveMode.value
+  selectedSeatForMove.value = null
+  dragTargetOver.value = null
+}
+
+// 1. 드래그 앤 드롭 이벤트 핸들러
+function onDragStart(e: DragEvent, r: number, c: number) {
+  draggedSeat.value = { r, c }
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', JSON.stringify({ r, c }))
+  }
+}
+
+function onDragOver(r: number, c: number) {
+  if (!draggedSeat.value) return
+  if (draggedSeat.value.r === r && draggedSeat.value.c === c) {
+    dragTargetOver.value = null
+    return
+  }
+  dragTargetOver.value = { r, c }
+}
+
+function onDragLeave(r: number, c: number) {
+  if (dragTargetOver.value && dragTargetOver.value.r === r && dragTargetOver.value.c === c) {
+    dragTargetOver.value = null
+  }
+}
+
+async function onDrop(targetRow: number, targetCol: number) {
+  dragTargetOver.value = null
+  if (!draggedSeat.value) return
+
+  const srcRow = draggedSeat.value.r
+  const srcCol = draggedSeat.value.c
+  draggedSeat.value = null
+
+  if (srcRow === targetRow && srcCol === targetCol) return
+  await executeSeatSwap(srcRow, srcCol, targetRow, targetCol)
+}
+
+function onDragEnd() {
+  draggedSeat.value = null
+  dragTargetOver.value = null
+}
+
+// 2. 클릭 기반 이동 (좌석 이동 모드 또는 터치 환경)
+async function handleSeatCellClick(r: number, c: number) {
+  const student = getStudentAt(r, c)
+
+  // 일반 모드일 때: 학생 카드 클릭 시 추첨 후보 토글
+  if (!isMoveMode.value) {
+    if (student) {
+      toggleCandidate(student.sno)
+    }
+    return
+  }
+
+  // 좌석 이동 모드일 때:
+  if (!selectedSeatForMove.value) {
+    if (!student) {
+      alert('이동할 학생이 앉아있는 좌석을 먼저 선택해 주세요.')
+      return
+    }
+    selectedSeatForMove.value = { r, c }
+  } else {
+    const src = selectedSeatForMove.value
+    selectedSeatForMove.value = null
+
+    if (src.r === r && src.c === c) {
+      return // 같은 자리 클릭 시 선택 해제
+    }
+
+    await executeSeatSwap(src.r, src.c, r, c)
+  }
+}
+
+// 좌석 맞교환 / 이동 API 호출 및 실시간 상태 동기화
+async function executeSeatSwap(srcRow: number, srcCol: number, targetRow: number, targetCol: number) {
+  try {
+    const res = await fetch('/api/speaker/swap', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        srcRow,
+        srcCol,
+        targetRow,
+        targetCol
+      })
+    })
+
+    if (res.ok) {
+      // 프론트엔드 상태 즉시 스왑
+      const s1 = students.value.find(s => s.srow === srcRow && s.scol === srcCol)
+      const s2 = students.value.find(s => s.srow === targetRow && s.scol === targetCol)
+
+      if (s1) {
+        s1.srow = targetRow
+        s1.scol = targetCol
+      }
+      if (s2) {
+        s2.srow = srcRow
+        s2.scol = srcCol
+      }
+    } else {
+      alert('좌석 이동 중 오류가 발생했습니다.')
+      await loadLayout()
+    }
+  } catch (e) {
+    alert('서버와 통신 중 오류가 발생했습니다.')
+    await loadLayout()
+  }
+}
 
 // colGroups (예: [2, 2, 2] 또는 [2, 3])를 기반으로 각 분단별 열 인덱스 배열 생성
 const sectionCols = computed(() => {
@@ -230,7 +384,7 @@ function toggleAllCandidates() {
   })
 }
 
-function shuffleSeats() {
+async function shuffleSeats() {
   // 1. 기존에 좌석이 배정되어 있는 학생들만 추출
   const assigned = students.value.filter(s => s.srow !== null && s.scol !== null)
   if (assigned.length < 2) {
@@ -280,7 +434,22 @@ function shuffleSeats() {
   }))
 
   students.value = updatedAssigned
-  alert(`🔀 기존 좌석 풀(${assigned.length}석) 내에서 전원 100% 다른 자리로 시험 배치가 완료되었습니다!`)
+
+  // 5. 백엔드 DB에 저장
+  try {
+    const res = await fetch('/api/speaker/layout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedAssigned)
+    })
+    if (res.ok) {
+      alert(`🔀 기존 좌석 풀(${assigned.length}석) 내에서 전원 100% 다른 자리로 시험 배치가 완료되고 DB에 저장되었습니다!`)
+    } else {
+      alert('셔플 결과 저장 중 오류가 발생했습니다.')
+    }
+  } catch (e) {
+    console.error('Failed to save shuffled layout:', e)
+  }
 }
 
 async function runLottery() {

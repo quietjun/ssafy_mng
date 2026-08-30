@@ -30,6 +30,12 @@ public class SpeakerController {
         return ResponseEntity.ok(speakerService.getSeatLayout());
     }
 
+    @PostMapping("/layout")
+    public ResponseEntity<?> saveLayout(@RequestBody List<StudentDto> students) {
+        boolean success = speakerService.saveSeatLayout(students);
+        return ResponseEntity.ok(Map.of("success", success));
+    }
+
     @PostMapping("/swap")
     public ResponseEntity<?> swapSeats(@RequestBody SeatSwapRequest req) {
         boolean success = speakerService.swapSeats(req);

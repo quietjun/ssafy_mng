@@ -960,7 +960,42 @@ input[type="date"].form-input {
 }
 .seat-sno { font-size: 0.75rem; color: var(--text-muted); }
 .seat-name { font-weight: 700; font-size: 0.95rem; margin: 0.15rem 0; }
+.seat-meta { display: flex; align-items: center; justify-content: center; gap: 0.25rem; }
 .seat-point { font-size: 0.7rem; color: #a5b4fc; }
+.seat-drag-handle { font-size: 0.75rem; color: #94a3b8; opacity: 0.6; cursor: grab; }
+
+/* Drag & Drop and Move Interaction Styles */
+.seat-card {
+    cursor: grab;
+}
+.seat-card:active {
+    cursor: grabbing;
+}
+.seat-card.is-dragging {
+    opacity: 0.35;
+    transform: scale(0.92);
+    border: 2px dashed #38bdf8 !important;
+}
+.seat-cell.drag-target-over {
+    background: rgba(56, 189, 248, 0.15);
+    border-radius: var(--radius-md);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+.seat-empty.drag-target-active {
+    background: rgba(56, 189, 248, 0.25) !important;
+    border: 2px dashed #38bdf8 !important;
+    color: #38bdf8 !important;
+    font-weight: 600;
+}
+.seat-card.is-move-selected {
+    border-color: #f59e0b !important;
+    background: rgba(245, 158, 11, 0.25) !important;
+    box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+}
+.seat-cell.move-selected-cell {
+    outline: 2px solid #f59e0b;
+    border-radius: var(--radius-md);
+}
 
 /* Unsubmitted Students Chip Box */
 .unsubmitted-box {
