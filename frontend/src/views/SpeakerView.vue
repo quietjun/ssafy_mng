@@ -5,10 +5,13 @@
         <button class="btn btn-warning" :disabled="isLotteryRunning" @click="runLottery">
           <span>🎲</span> {{ isLotteryRunning ? '추첨 중...' : '발표자 추첨' }}
         </button>
-        <button class="btn btn-secondary" @click="shuffleSeats">
+        <button v-if="!isShuffled" class="btn btn-secondary" @click="shuffleSeats">
           <span>🔀</span> 시험배치 (셔플)
         </button>
-        <button :class="['btn', isMoveMode ? 'btn-danger' : 'btn-outline']" @click="toggleMoveMode">
+        <button v-else class="btn btn-primary" @click="restoreOriginalSeats">
+          <span>↩️</span> 원래 자리로 복원
+        </button>
+        <button :class="['btn', isMoveMode ? 'btn-danger' : 'btn-outline']" :disabled="isShuffled" @click="toggleMoveMode">
           <span>✋</span> {{ isMoveMode ? '좌석이동 모드 종료' : '좌석 이동 / 맞교환' }}
         </button>
         <button class="btn btn-success" @click="isRotated = !isRotated">
@@ -27,8 +30,16 @@
       </div>
     </div>
 
+    <!-- 시험배치 임시 모드 알림 배너 -->
+    <div v-if="isShuffled" class="alert-banner warning mb-3">
+      <div class="alert-content">
+        <span>📢</span>
+        <span><b>임시 시험배치 상태입니다</b> (DB에 저장되지 않음). 시험이 끝난 후 상단의 <b>[↩️ 원래 자리로 복원]</b> 버튼을 누르면 평소 자리로 되돌아갑니다.</span>
+      </div>
+    </div>
+
     <!-- 좌석 이동 모드 알림 배너 -->
-    <div v-if="isMoveMode" class="alert-banner info mb-3">
+    <div v-if="isMoveMode && !isShuffled" class="alert-banner info mb-3">
       <div class="alert-content">
         <span>💡</span>
         <span><b>좌석 이동 모드</b>: 학생 카드를 원하는 자리로 <b>드래그 앤 드롭</b>하거나, <b>클릭(선택) 후 이동할 자리(클릭)</b>를 선택하면 자리가 이동/맞교환됩니다.</span>
@@ -178,6 +189,9 @@ const highlightSno = ref<string | null>(null)
 const winnerSno = ref<string | null>(null)
 const winner = ref<StudentSeat | null>(null)
 
+// 시험배치(임시 셔플) 상태
+const isShuffled = ref(false)
+
 // 좌석 이동 / 맞교환 관련 상태
 const isMoveMode = ref(false)
 const draggedSeat = ref<{ r: number; c: number } | null>(null)
@@ -192,8 +206,19 @@ onMounted(async () => {
   await loadLayout()
 })
 
+// 원래 자리로 복원
+async function restoreOriginalSeats() {
+  await loadLayout()
+  isShuffled.value = false
+  alert('↩️ 시험배치를 종료하고 원래 평소 좌석 배치로 복원되었습니다!')
+}
+
 // 좌석 이동 모드 토글
 function toggleMoveMode() {
+  if (isShuffled.value) {
+    alert('시험배치 중에는 좌석 이동 모드를 사용할 수 없습니다. 원래 자리로 복원 후 이용해 주세요.')
+    return
+  }
   isMoveMode.value = !isMoveMode.value
   selectedSeatForMove.value = null
   dragTargetOver.value = null
@@ -201,6 +226,7 @@ function toggleMoveMode() {
 
 // 1. 드래그 앤 드롭 이벤트 핸들러
 function onDragStart(e: DragEvent, r: number, c: number) {
+  if (isShuffled.value) return // 시험배치 중에는 개별 드래그 비활성화
   draggedSeat.value = { r, c }
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move'
@@ -209,7 +235,7 @@ function onDragStart(e: DragEvent, r: number, c: number) {
 }
 
 function onDragOver(r: number, c: number) {
-  if (!draggedSeat.value) return
+  if (isShuffled.value || !draggedSeat.value) return
   if (draggedSeat.value.r === r && draggedSeat.value.c === c) {
     dragTargetOver.value = null
     return
@@ -224,6 +250,7 @@ function onDragLeave(r: number, c: number) {
 }
 
 async function onDrop(targetRow: number, targetCol: number) {
+  if (isShuffled.value) return
   dragTargetOver.value = null
   if (!draggedSeat.value) return
 
@@ -384,7 +411,7 @@ function toggleAllCandidates() {
   })
 }
 
-async function shuffleSeats() {
+function shuffleSeats() {
   // 1. 기존에 좌석이 배정되어 있는 학생들만 추출
   const assigned = students.value.filter(s => s.srow !== null && s.scol !== null)
   if (assigned.length < 2) {
@@ -424,7 +451,7 @@ async function shuffleSeats() {
     finalSlots = seatSlots.map((_, idx) => seatSlots[(idx + 1) % seatSlots.length])
   }
 
-  // 4. 새로운 좌석 좌표 배정
+  // 4. 새로운 좌석 좌표 화면에만 임시 배정 (DB 저장 X)
   const updatedAssigned: StudentSeat[] = studentOrigin.map((s, idx) => ({
     sno: s.sno,
     name: s.name,
@@ -434,22 +461,8 @@ async function shuffleSeats() {
   }))
 
   students.value = updatedAssigned
-
-  // 5. 백엔드 DB에 저장
-  try {
-    const res = await fetch('/api/speaker/layout', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updatedAssigned)
-    })
-    if (res.ok) {
-      alert(`🔀 기존 좌석 풀(${assigned.length}석) 내에서 전원 100% 다른 자리로 시험 배치가 완료되고 DB에 저장되었습니다!`)
-    } else {
-      alert('셔플 결과 저장 중 오류가 발생했습니다.')
-    }
-  } catch (e) {
-    console.error('Failed to save shuffled layout:', e)
-  }
+  isShuffled.value = true
+  alert(`🔀 기존 좌석 풀(${assigned.length}석) 내에서 전원 100% 다른 자리로 임시 시험배치가 완료되었습니다!\n(DB에 저장되지 않으며 상단 '원래 자리로 복원' 버튼으로 언제든 복구할 수 있습니다.)`)
 }
 
 async function runLottery() {
