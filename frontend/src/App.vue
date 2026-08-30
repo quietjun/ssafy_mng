@@ -83,6 +83,7 @@ async function handleChangePassword() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        currentPassword: oldPassword.value,
         oldPassword: oldPassword.value,
         newPassword: newPassword.value
       })
