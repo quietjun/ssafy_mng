@@ -24,6 +24,13 @@ target/
 hs_err_pid*
 replay_pid*
 
+# Secret & SSH Keys (Safety)
+*.key
+*.pem
+*.pub
+.keys/
+ssh/
+
 # Node / Frontend
 frontend/node_modules/
 frontend/dist/
