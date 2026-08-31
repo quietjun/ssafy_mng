@@ -483,36 +483,76 @@
             <table class="data-table peer-table" style="table-layout: fixed; width: 100%;">
               <thead>
                 <tr>
-                  <th @click="sortBy('studentName')" class="sortable-th" style="width: 17%;">제출자 ↕</th>
-                  <th @click="sortBy('submittedAt')" class="sortable-th" style="width: 14%;">제출시각 ↕</th>
-                  <th @click="sortBy('resultStatus')" class="sortable-th" style="width: 11%; text-align:center;">결과 ↕</th>
-                  <th @click="sortBy('executionTime')" class="sortable-th" style="width: 12%; text-align:center;">실행시간(ms) ↕</th>
-                  <th @click="sortBy('memoryUsage')" class="sortable-th" style="width: 12%; text-align:center;">메모리(KB) ↕</th>
-                  <th @click="sortBy('codeLength')" class="sortable-th" style="width: 10%; text-align:center;">길이(B) ↕</th>
-                  <th style="width: 12%; text-align:center;">시간 복잡도</th>
-                  <th style="width: 12%; text-align:center;">코드 보기</th>
+                  <th @click="sortBy('studentName')" class="sortable-th" style="width: 25%;">제출자 ↕</th>
+                  <th @click="sortBy('submittedAt')" class="sortable-th" style="width: 20%;">제출시각 ↕</th>
+                  <th @click="sortBy('executionTime')" class="sortable-th" style="width: 17%; text-align:center;">실행시간(ms) ↕</th>
+                  <th @click="sortBy('memoryUsage')" class="sortable-th" style="width: 17%; text-align:center;">메모리(KB) ↕</th>
+                  <th @click="sortBy('codeLength')" class="sortable-th" style="width: 11%; text-align:center;">길이(B) ↕</th>
+                  <th style="width: 10%; text-align:center;">더보기</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="peerSubmissions.length === 0">
-                  <td colspan="8" style="text-align:center;" class="empty-state">제출된 풀이가 없습니다.</td>
+                  <td colspan="6" style="text-align:center;" class="empty-state">제출된 풀이가 없습니다.</td>
                 </tr>
-                <tr v-for="s in sortedSubmissions" :key="s.id">
-                  <td><strong>{{ s.studentName }}</strong> ({{ s.studentSno || s.sno }})</td>
-                  <td style="color:#94a3b8; font-size:0.82rem;">{{ formatShortDateTime(s.submittedAt) }}</td>
-                  <td style="text-align:center;">
-                    <span :class="['ai-chip', s.resultStatus === 'Pass' ? 'chip-pass' : 'chip-fail']" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">
-                      {{ s.resultStatus || 'Pass' }}
-                    </span>
-                  </td>
-                  <td style="text-align:center;"><span class="ai-chip chip-time" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">{{ stripUnit(s.executionTime) }}</span></td>
-                  <td style="text-align:center;"><span class="ai-chip chip-mem" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">{{ stripUnit(s.memoryUsage) }}</span></td>
-                  <td style="text-align:center; font-size:0.82rem;">{{ stripUnit(s.codeLength) }}</td>
-                  <td style="text-align:center;"><span class="ai-chip chip-complexity" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">{{ s.aiTimeComplexity || '-' }}</span></td>
-                  <td style="text-align:center;">
-                    <button class="btn btn-sm btn-outline" style="padding: 0.2rem 0.5rem; font-size: 0.78rem;" @click="openCodeModal(s)">🔍 코드</button>
-                  </td>
-                </tr>
+                <template v-for="s in sortedSubmissions" :key="s.id">
+                  <tr :class="{ 'row-expanded': expandedSubmissionId === s.id }">
+                    <td><strong>{{ s.studentName }}</strong> ({{ s.studentSno || s.sno }})</td>
+                    <td style="color:#94a3b8; font-size:0.82rem;">{{ formatShortDateTime(s.submittedAt) }}</td>
+                    <td style="text-align:center;"><span class="ai-chip chip-time" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">{{ stripUnit(s.executionTime) }}</span></td>
+                    <td style="text-align:center;"><span class="ai-chip chip-mem" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">{{ stripUnit(s.memoryUsage) }}</span></td>
+                    <td style="text-align:center; font-size:0.82rem;">{{ stripUnit(s.codeLength) }}</td>
+                    <td style="text-align:center;">
+                      <button 
+                        class="btn btn-sm"
+                        :class="expandedSubmissionId === s.id ? 'btn-primary' : 'btn-outline'"
+                        style="padding: 0.2rem 0.55rem; font-size: 0.78rem;" 
+                        @click="toggleExpand(s.id)"
+                      >
+                        {{ expandedSubmissionId === s.id ? '🔼 접기' : '🔽 더보기' }}
+                      </button>
+                    </td>
+                  </tr>
+
+                  <!-- Expanded Detail Row -->
+                  <tr v-if="expandedSubmissionId === s.id" class="peer-detail-row">
+                    <td colspan="6">
+                      <div class="peer-detail-card">
+                        <div class="peer-detail-grid">
+                          <div class="peer-detail-items">
+                            <div class="peer-detail-item">
+                              <span class="detail-label">결과:</span>
+                              <span :class="['ai-chip', s.resultStatus === 'Pass' ? 'chip-pass' : 'chip-fail']" style="padding: 0.15rem 0.45rem; font-size: 0.78rem;">
+                                {{ s.resultStatus || 'Pass' }}
+                              </span>
+                            </div>
+                            <div class="peer-detail-item">
+                              <span class="detail-label">시간 복잡도:</span>
+                              <span class="ai-chip chip-complexity" style="padding: 0.15rem 0.45rem; font-size: 0.78rem;">
+                                {{ s.aiTimeComplexity || '-' }}
+                              </span>
+                            </div>
+                            <div class="peer-detail-item keywords-item">
+                              <span class="detail-label">핵심 키워드:</span>
+                              <div v-if="getKeywordsList(s).length > 0" class="keyword-tags-inline">
+                                <span v-for="(kw, idx) in getKeywordsList(s)" :key="idx" class="keyword-tag-badge mini">
+                                  #{{ kw }}
+                                </span>
+                              </div>
+                              <span v-else style="color:#64748b; font-size:0.8rem;">-</span>
+                            </div>
+                          </div>
+
+                          <div class="peer-detail-action">
+                            <button class="btn btn-sm btn-outline" style="font-size:0.8rem; padding: 0.3rem 0.75rem;" @click="openCodeModal(s)">
+                              🔍 코드 보기
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                </template>
               </tbody>
             </table>
           </div>
@@ -779,8 +819,25 @@ onUnmounted(() => {
   window.removeEventListener('paste', handleGlobalPaste)
 })
 
+const expandedSubmissionId = ref<number | string | null>(null)
+
+function toggleExpand(id: number | string) {
+  if (expandedSubmissionId.value === id) {
+    expandedSubmissionId.value = null
+  } else {
+    expandedSubmissionId.value = id
+  }
+}
+
+function getKeywordsList(s: any): string[] {
+  if (!s?.aiKeywords) return []
+  if (Array.isArray(s.aiKeywords)) return s.aiKeywords
+  return String(s.aiKeywords).split(',').map((k: string) => k.trim()).filter(Boolean)
+}
+
 watch(() => problemStore.selectedProblem, async (newVal) => {
   submissionStep.value = 1
+  expandedSubmissionId.value = null
   if (newVal) {
     await loadPeerSubmissions()
   } else {

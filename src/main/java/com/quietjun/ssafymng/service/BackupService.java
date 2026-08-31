@@ -30,6 +30,12 @@ public class BackupService {
     @Value("${spring.datasource.password}")
     private String localDbPassword;
 
+    @Value("${app.backup.mysqldump-path:}")
+    private String customMysqldumpPath;
+
+    @Value("${app.backup.mysql-path:}")
+    private String customMysqlPath;
+
     public Map<String, Object> syncCloudToLocal(
             String remoteHost, 
             int remotePort, 
@@ -69,7 +75,13 @@ public class BackupService {
             importPb.redirectInput(tempSqlFile);
             importPb.redirectErrorStream(true);
 
-            Process importProcess = importPb.start();
+            Process importProcess;
+            try {
+                importProcess = importPb.start();
+            } catch (Exception e) {
+                throw new RuntimeException("로컬 DB 복원 도구('" + mysqlCmd + "')를 실행할 수 없습니다. MySQL 이 설치되어 있는지 확인하거나 application.properties 에 app.backup.mysql-path 경로를 설정해 주세요.", e);
+            }
+
             StringBuilder importLog = new StringBuilder();
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(importProcess.getInputStream()))) {
                 String line;
@@ -147,7 +159,12 @@ public class BackupService {
         dumpPb.redirectOutput(outputSqlFile);
         dumpPb.redirectErrorStream(false); // CRITICAL: stderr가 stdout(SQL 파일)에 섞이지 않도록 분리
 
-        Process dumpProcess = dumpPb.start();
+        Process dumpProcess;
+        try {
+            dumpProcess = dumpPb.start();
+        } catch (Exception e) {
+            throw new RuntimeException("mysqldump 실행 프로그램('" + mysqldumpCmd + "')을 찾을 수 없거나 실행하지 못했습니다. MySQL이 설치되어 있는지 확인하거나 application.properties 에 app.backup.mysqldump-path 경로를 설정해 주세요.", e);
+        }
 
         // stderr는 별도로 읽어서 로그에만 기록
         StringBuilder stderrLog = new StringBuilder();
@@ -201,20 +218,61 @@ public class BackupService {
     }
 
     private String findExecutable(String name) {
-        String[] commonPaths = {
-            "/opt/homebrew/bin/" + name,
-            "/usr/local/bin/" + name,
-            "/usr/bin/" + name,
-            name
-        };
-        for (String path : commonPaths) {
-            File f = new File(path);
-            if (f.exists() && f.canExecute()) {
-                return path;
+        if ("mysqldump".equals(name) && customMysqldumpPath != null && !customMysqldumpPath.trim().isEmpty()) {
+            File f = new File(customMysqldumpPath);
+            if (f.exists()) return f.getAbsolutePath();
+        }
+        if ("mysql".equals(name) && customMysqlPath != null && !customMysqlPath.trim().isEmpty()) {
+            File f = new File(customMysqlPath);
+            if (f.exists()) return f.getAbsolutePath();
+        }
+
+        List<String> candidates = new ArrayList<>();
+
+        // Linux / macOS standard binary paths
+        candidates.add("/opt/homebrew/bin/" + name);
+        candidates.add("/usr/local/bin/" + name);
+        candidates.add("/usr/bin/" + name);
+
+        // Windows common MySQL / MariaDB installation paths
+        String ext = isWindows() ? ".exe" : "";
+        String exeName = name + ext;
+
+        candidates.add("C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\" + exeName);
+        candidates.add("C:\\Program Files\\MySQL\\MySQL Server 8.0\\bin\\" + exeName);
+        candidates.add("C:\\Program Files\\MySQL\\MySQL Server 5.7\\bin\\" + exeName);
+        candidates.add("C:\\Program Files\\MySQL\\MySQL Workbench 8.0\\" + exeName);
+        candidates.add("C:\\Program Files\\MySQL\\MySQL Workbench 8.0 CE\\" + exeName);
+        candidates.add("C:\\Program Files\\MariaDB 10.11\\bin\\" + exeName);
+        candidates.add("C:\\Program Files\\MariaDB 10.6\\bin\\" + exeName);
+        candidates.add("C:\\xampp\\mysql\\bin\\" + exeName);
+
+        // System PATH environment directories
+        String sysPath = System.getenv("PATH");
+        if (sysPath != null) {
+            for (String dir : sysPath.split(File.pathSeparator)) {
+                if (dir != null && !dir.trim().isEmpty()) {
+                    candidates.add(new File(dir.trim(), exeName).getAbsolutePath());
+                    candidates.add(new File(dir.trim(), name).getAbsolutePath());
+                }
             }
         }
+
+        for (String path : candidates) {
+            File f = new File(path);
+            if (f.exists() && f.isFile()) {
+                return f.getAbsolutePath();
+            }
+        }
+
         return name;
     }
+
+    private boolean isWindows() {
+        String os = System.getProperty("os.name");
+        return os != null && os.toLowerCase().contains("win");
+    }
+}
 
     private String extractHostFromUrl(String url, String defaultHost) {
         try {
