@@ -2,9 +2,15 @@
   <div class="pairs-page">
     <div class="card mb-3">
       <div class="card-header" style="flex-wrap: wrap; gap: 1rem;">
-        <div style="display: flex; align-items: center; gap: 0.6rem;">
-          <h2 style="font-size: 1.3rem; font-weight: 800; color: #f8fafc;">👥 프로젝트 도메인별 2인 1조 페어 관리</h2>
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+          <h2 style="font-size: 1.3rem; font-weight: 800; color: #f8fafc; margin: 0;">👥 프로젝트 도메인별 2인 1조 페어 관리</h2>
           <span class="badge">총 {{ domainStudents.length }}명</span>
+          <span v-if="currentHistoryTitle" class="badge success" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+            📂 마지막 저장 페어: {{ currentHistoryTitle }}
+          </span>
+          <span v-else class="badge warning" style="font-size: 0.8rem; padding: 0.3rem 0.6rem;">
+            ✨ 새로 매칭 중 (미저장)
+          </span>
         </div>
 
         <!-- Action Control Buttons -->
@@ -221,14 +227,24 @@
                     저장 일시: {{ formatDate(group.createdAt) }}
                   </div>
                 </div>
-                <button 
-                  class="btn btn-sm btn-danger" 
-                  style="font-size: 0.8rem; padding: 0.35rem 0.75rem; font-weight: 700;"
-                  @click="deletePairHistoryTitle(group.domain, group.title)" 
-                  title="해당 페어 회차 전체 삭제"
-                >
-                  🗑️ 회차 전체 삭제
-                </button>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <button 
+                    class="btn btn-sm btn-primary" 
+                    style="font-size: 0.8rem; padding: 0.35rem 0.75rem; font-weight: 700;"
+                    @click="applyHistoryToWorkspace(group)" 
+                    title="이 페어를 작업 화면으로 불러옵니다"
+                  >
+                    📥 화면으로 불러오기
+                  </button>
+                  <button 
+                    class="btn btn-sm btn-danger" 
+                    style="font-size: 0.8rem; padding: 0.35rem 0.75rem; font-weight: 700;"
+                    @click="deletePairHistoryTitle(group.domain, group.title)" 
+                    title="해당 페어 회차 전체 삭제"
+                  >
+                    🗑️ 회차 삭제
+                  </button>
+                </div>
               </div>
 
               <!-- Pair Members List in Saved Session -->
@@ -260,6 +276,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/utils/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -297,6 +314,7 @@ const pairs = ref<StudentItem[][]>([])
 const unassignedStudents = ref<StudentItem[]>([])
 
 const pastHistories = ref<PairHistoryItem[]>([])
+const currentHistoryTitle = ref<string | null>(null)
 
 const draggedStudent = ref<StudentItem | null>(null)
 const draggedFromPairIdx = ref<number>(-2)
@@ -313,6 +331,7 @@ onMounted(async () => {
     return
   }
   await Promise.all([loadStudents(), loadPairHistories()])
+  initPairsForDomain(selectedDomain.value)
 })
 
 const availableDomains = computed(() => {
@@ -358,14 +377,10 @@ function getStudentCountByDomain(dom: string) {
 
 async function loadStudents() {
   try {
-    const res = await fetch('/api/students')
-    if (res.ok) {
-      const data = await res.json()
-      allStudents.value = Array.isArray(data) ? data : []
-      if (availableDomains.value.length > 0 && !availableDomains.value.includes(selectedDomain.value)) {
-        selectedDomain.value = availableDomains.value[0]
-      }
-      resetPairsForCurrentDomain()
+    const { data } = await api.get<StudentItem[]>('/api/students')
+    allStudents.value = Array.isArray(data) ? data : []
+    if (availableDomains.value.length > 0 && !availableDomains.value.includes(selectedDomain.value)) {
+      selectedDomain.value = availableDomains.value[0]
     }
   } catch (e) {
     console.error('Failed to load students:', e)
@@ -374,11 +389,8 @@ async function loadStudents() {
 
 async function loadPairHistories() {
   try {
-    const res = await fetch('/api/pairs/history')
-    if (res.ok) {
-      const data = await res.json()
-      pastHistories.value = Array.isArray(data) ? data : []
-    }
+    const { data } = await api.get<PairHistoryItem[]>('/api/pairs/history')
+    pastHistories.value = Array.isArray(data) ? data : []
   } catch (e) {
     console.error('Failed to load pair histories:', e)
   }
@@ -386,10 +398,70 @@ async function loadPairHistories() {
 
 function selectDomain(dom: string) {
   selectedDomain.value = dom
-  resetPairsForCurrentDomain()
+  initPairsForDomain(dom)
+}
+
+// 도메인의 마지막 저장 이력이 있으면 자동 복원, 없으면 성적순 자동 매칭
+function initPairsForDomain(dom: string) {
+  const domainGroups = groupedHistories.value.filter(g => g.domain === dom)
+  if (domainGroups.length > 0) {
+    // 가장 최근 저장된 회차 이력 로드
+    loadHistoryToWorkspace(domainGroups[0])
+  } else {
+    // 저장된 이력이 없으면 성적순 자동 생성
+    resetPairsForCurrentDomain()
+  }
+}
+
+function loadHistoryToWorkspace(group: { title: string; domain: string; items: PairHistoryItem[] }) {
+  currentHistoryTitle.value = group.title
+  const assignedSnoSet = new Set<string>()
+  const newPairs: StudentItem[][] = []
+
+  group.items.forEach(item => {
+    const pair: StudentItem[] = []
+    
+    // 학생 1
+    if (item.student1Sno && item.student1Sno !== '-') {
+      const s1 = allStudents.value.find(s => s.sno === item.student1Sno)
+      if (s1) {
+        pair.push(s1)
+        assignedSnoSet.add(s1.sno)
+      } else {
+        // 학생 정보가 DB에서 삭제된 경우 가상 학생 객체로 복원
+        pair.push({ sno: item.student1Sno, name: item.student1Name, domain: group.domain })
+      }
+    }
+    
+    // 학생 2
+    if (item.student2Sno && item.student2Sno !== '-' && item.student2Name !== '단독(1인 조)') {
+      const s2 = allStudents.value.find(s => s.sno === item.student2Sno)
+      if (s2) {
+        pair.push(s2)
+        assignedSnoSet.add(s2.sno)
+      } else {
+        pair.push({ sno: item.student2Sno, name: item.student2Name, domain: group.domain })
+      }
+    }
+
+    if (pair.length > 0) {
+      newPairs.push(pair)
+    }
+  })
+
+  pairs.value = newPairs
+  // 도메인 학생 중 페어에 배정되지 않은 학생을 미배정 목록에 배치
+  unassignedStudents.value = domainStudents.value.filter(s => !assignedSnoSet.has(s.sno))
+}
+
+function applyHistoryToWorkspace(group: { title: string; domain: string; items: PairHistoryItem[] }) {
+  loadHistoryToWorkspace(group)
+  isHistoryModalOpen.value = false
+  alert(`📂 '${group.title}' 페어 구성을 작업 화면으로 불러왔습니다.`)
 }
 
 function resetPairsForCurrentDomain() {
+  currentHistoryTitle.value = null
   pairs.value = []
   unassignedStudents.value = [...domainStudents.value]
   autoPairSnake()
@@ -397,6 +469,7 @@ function resetPairsForCurrentDomain() {
 
 // 🪄 1등 ↔ 꼴등 자동 매칭 (Snake Top-Bottom Pairing)
 function autoPairSnake() {
+  currentHistoryTitle.value = null
   const sorted = [...domainStudents.value].sort((a, b) => {
     const scoreA = a.totalExamScore != null ? a.totalExamScore : 0
     const scoreB = b.totalExamScore != null ? b.totalExamScore : 0
@@ -428,6 +501,7 @@ function autoPairSnake() {
 
 // 🎲 무작위 랜덤 페어링
 function autoPairRandom() {
+  currentHistoryTitle.value = null
   const shuffled = [...domainStudents.value].sort(() => Math.random() - 0.5)
   const newPairs: StudentItem[][] = []
 
@@ -448,6 +522,7 @@ function autoPairRandom() {
 }
 
 function addNewEmptyPair() {
+  currentHistoryTitle.value = null
   pairs.value.push([])
 }
 
@@ -459,8 +534,11 @@ function removePairCard(idx: number) {
 }
 
 // ⚠️ Check if Pair has Past Pair History in DB (Checks all pairwise combinations)
+// 저장된 기존 회차를 열람 중일 때는 경고를 띄우지 않고, '새로 매칭/수정 중(currentHistoryTitle == null)'일 때만 경고 표시
 function getPastHistoryWarning(pair: StudentItem[]): PairHistoryItem | null {
+  if (currentHistoryTitle.value !== null) return null
   if (pair.length < 2) return null
+
   for (let i = 0; i < pair.length; i++) {
     for (let j = i + 1; j < pair.length; j++) {
       const sno1 = pair[i].sno
@@ -522,26 +600,16 @@ async function submitSavePairs() {
 
   isSaving.value = true
   try {
-    const res = await fetch('/api/pairs/history', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        domain: selectedDomain.value,
-        title: saveTitle.value.trim(),
-        pairs: payloadPairs
-      })
+    await api.post('/api/pairs/history', {
+      domain: selectedDomain.value,
+      title: saveTitle.value.trim(),
+      pairs: payloadPairs
     })
-
-    const data = await res.json()
-    if (res.ok) {
-      alert('💾 페어 이력이 성공적으로 저장되었습니다!')
-      isSaveModalOpen.value = false
-      await loadPairHistories()
-    } else {
-      alert('저장 실패: ' + (data.message || '오류 발생'))
-    }
-  } catch (e) {
-    alert('네트워크 오류')
+    alert('💾 페어 이력이 성공적으로 저장되었습니다!')
+    isSaveModalOpen.value = false
+    await loadPairHistories()
+  } catch (e: any) {
+    alert('저장 실패: ' + (e.response?.data?.message || '네트워크 오류'))
   } finally {
     isSaving.value = false
   }
@@ -550,10 +618,8 @@ async function submitSavePairs() {
 async function deletePairHistoryItem(id: number) {
   if (confirm('해당 페어 이력 항목을 삭제하시겠습니까?')) {
     try {
-      const res = await fetch(`/api/pairs/history/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        await loadPairHistories()
-      }
+      await api.delete(`/api/pairs/history/${id}`)
+      await loadPairHistories()
     } catch (e) {
       alert('삭제 실패')
     }
@@ -563,11 +629,9 @@ async function deletePairHistoryItem(id: number) {
 async function deletePairHistoryTitle(domain: string, title: string) {
   if (confirm(`'${title}' 회차의 전체 페어 이력을 삭제하시겠습니까?\n(삭제 시 이전 짝 경고 표시 대상에서 제외됩니다.)`)) {
     try {
-      const res = await fetch(`/api/pairs/history/title?domain=${encodeURIComponent(domain)}&title=${encodeURIComponent(title)}`, { method: 'DELETE' })
-      if (res.ok) {
-        alert(`🗑️ '${title}' 페어 회차 이력이 삭제되었습니다.`)
-        await loadPairHistories()
-      }
+      await api.delete(`/api/pairs/history/title?domain=${encodeURIComponent(domain)}&title=${encodeURIComponent(title)}`)
+      alert(`🗑️ '${title}' 페어 회차 이력이 삭제되었습니다.`)
+      await loadPairHistories()
     } catch (e) {
       alert('삭제 실패')
     }
@@ -649,6 +713,7 @@ function onDropToPair(targetPairIdx: number) {
   dragOverPairIdx.value = -2
   if (!draggedStudent.value) return
 
+  currentHistoryTitle.value = null
   removeStudentFromSource()
 
   pairs.value[targetPairIdx].push(draggedStudent.value)

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import api from '@/utils/api'
 
 export interface UserSession {
   authenticated: boolean
@@ -25,14 +26,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function checkAuth() {
     try {
-      const res = await fetch('/api/auth/current')
-      if (res.ok) {
-        const data: UserSession = await res.json()
-        if (data && data.authenticated) {
-          user.value = data
-        } else {
-          user.value = null
-        }
+      const { data } = await api.get<UserSession>('/api/auth/current')
+      if (data && data.authenticated) {
+        user.value = data
       } else {
         user.value = null
       }
@@ -45,12 +41,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function loadUsersForLogin(retry = 2) {
     try {
-      const res = await fetch('/api/auth/users', { cache: 'no-store' })
-      if (res.ok) {
-        const list: UserListItem[] = await res.json()
-        if (Array.isArray(list)) {
-          usersList.value = list
-        }
+      const { data } = await api.get<UserListItem[]>('/api/auth/users')
+      if (Array.isArray(data)) {
+        usersList.value = data
       }
     } catch (e) {
       if (retry > 0) {
@@ -64,21 +57,21 @@ export const useAuthStore = defineStore('auth', () => {
     formData.append('sno', sno)
     formData.append('password', password)
 
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      body: formData
-    })
-
-    if (res.ok) {
-      await checkAuth()
-      return true
+    try {
+      const res = await api.post('/api/auth/login', formData)
+      if (res.status >= 200 && res.status < 300) {
+        await checkAuth()
+        return true
+      }
+    } catch (e) {
+      return false
     }
     return false
   }
 
   async function logout() {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await api.post('/api/auth/logout')
     } catch (e) {}
     user.value = null
   }

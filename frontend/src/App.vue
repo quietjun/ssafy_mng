@@ -1,5 +1,8 @@
 <template>
   <div id="app">
+    <!-- Global Loading Spinner -->
+    <GlobalLoading />
+
     <!-- Top Navigation Bar -->
     <Navbar @open-password-modal="isPasswordModalOpen = true" />
 
@@ -57,6 +60,8 @@
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import Navbar from '@/components/Navbar.vue'
+import GlobalLoading from '@/components/GlobalLoading.vue'
+import api from '@/utils/api'
 
 const authStore = useAuthStore()
 const isPasswordModalOpen = ref(false)
@@ -79,17 +84,12 @@ async function handleChangePassword() {
   pwError.value = ''
 
   try {
-    const res = await fetch('/api/auth/change-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        currentPassword: oldPassword.value,
-        oldPassword: oldPassword.value,
-        newPassword: newPassword.value
-      })
+    const { data } = await api.post('/api/auth/change-password', {
+      currentPassword: oldPassword.value,
+      oldPassword: oldPassword.value,
+      newPassword: newPassword.value
     })
-    const data = await res.json()
-    if (res.ok && data.success) {
+    if (data.success) {
       alert('✅ 비밀번호가 성공적으로 변경되었습니다!')
       isPasswordModalOpen.value = false
       oldPassword.value = ''
@@ -100,7 +100,7 @@ async function handleChangePassword() {
       pwError.value = data.message || '비밀번호 변경 실패'
     }
   } catch (e: any) {
-    pwError.value = '비밀번호 변경 중 오류가 발생했습니다.'
+    pwError.value = e.response?.data?.message || '비밀번호 변경 중 오류가 발생했습니다.'
   } finally {
     isChangingPw.value = false
   }

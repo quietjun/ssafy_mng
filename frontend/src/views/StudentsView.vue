@@ -9,7 +9,10 @@
               <h3>👨‍🎓 학생 계정 목록</h3>
               <span class="badge">{{ filteredStudents.length }} / {{ students.length }}명</span>
             </div>
-            <button class="btn btn-sm btn-primary" @click="openAddStudentModal">+ 신규 학생 등록</button>
+            <div style="display:flex; gap:0.4rem;">
+              <button class="btn btn-sm btn-outline" @click="isBulkModalOpen = true">📋 학생 일괄 등록</button>
+              <button class="btn btn-sm btn-primary" @click="openAddStudentModal">+ 신규 등록</button>
+            </div>
           </div>
 
           <!-- Search Filter -->
@@ -115,7 +118,7 @@
                 <div class="stat-label">시험 총점</div>
               </div>
               <div class="stat-card">
-                <div class="stat-num" style="color:var(--primary);">{{ studentAverageScore }}점</div>
+                <div class="stat-num" :style="{ color: Number(studentAverageScore) < 60 ? '#f87171' : 'var(--primary)' }">{{ studentAverageScore }}점</div>
                 <div class="stat-label">시험 평균</div>
               </div>
               <div class="stat-card">
@@ -175,52 +178,117 @@
               </div>
             </div>
 
-            <!-- Student Exam Scores Breakdown Section -->
+            <!-- Student Exam Scores Breakdown Section (Grouped by Category) -->
             <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
-                <h4 style="color:#f8fafc; font-size:0.95rem;">📊 시험별 성적 이력 ({{ studentExamScores.length }}건)</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                  <h4 style="color:#f8fafc; font-size:0.95rem; margin:0;">📊 시험별 성적 이력</h4>
+                  <span class="badge" style="font-size:0.75rem;">총 {{ studentExamScores.length }}건</span>
+                </div>
                 <button class="btn btn-sm btn-outline" style="font-size:0.75rem;" @click="loadStudentScores(selectedStudent.sno)">🔄 새로고침</button>
               </div>
 
-              <div class="table-responsive">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 35%;">시험 항목명</th>
-                      <th style="width: 25%; text-align:center;">취득 점수</th>
-                      <th style="width: 20%; text-align:center;">비고 / 메모</th>
-                      <th style="width: 20%; text-align:center;">업데이트 일시</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr v-if="isLoadingScores">
-                      <td colspan="4" class="empty-state" style="text-align:center;">성적 이력을 불러오는 중...</td>
-                    </tr>
-                    <tr v-else-if="studentExamScores.length === 0">
-                      <td colspan="4" class="empty-state" style="text-align:center;">등록된 시험 점수가 없습니다.</td>
-                    </tr>
-                    <tr v-for="sc in studentExamScores" :key="sc.id || sc.examId">
-                      <td>
-                        <strong style="color:#f8fafc; font-size:0.9rem; display:block;">{{ sc.examTitle || '평가 항목' }}</strong>
-                      </td>
-                      <td style="text-align:center;">
-                        <span class="ai-chip chip-pass" style="font-size:0.85rem; font-weight:800; padding:0.2rem 0.6rem;">
-                          {{ sc.score }}점
-                        </span>
-                      </td>
-                      <td style="text-align:center; color:var(--text-muted); font-size:0.82rem;">
-                        {{ sc.note || '-' }}
-                      </td>
-                      <td style="text-align:center; color:var(--text-muted); font-size:0.78rem;">
-                        {{ formatDate(sc.updatedAt) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div v-if="isLoadingScores" class="card" style="text-align:center; padding: 2rem; color:var(--text-muted);">
+                성적 이력을 불러오는 중...
+              </div>
+
+              <div v-else-if="studentExamScores.length === 0" class="card" style="text-align:center; padding: 2rem; color:var(--text-muted);">
+                등록된 시험 점수가 없습니다.
+              </div>
+
+              <!-- Grouped Score Cards -->
+              <div v-else style="display:flex; flex-direction:column; gap:0.85rem;">
+                <div 
+                  v-for="grp in groupedExamScores" 
+                  :key="grp.category"
+                  class="exam-group-box"
+                  style="background: rgba(30, 41, 59, 0.4); border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow:hidden;"
+                >
+                  <!-- Group Header with Pass/Fail Count -->
+                  <div style="display:flex; justify-content:space-between; align-items:center; padding: 0.55rem 0.85rem; background: rgba(15, 23, 42, 0.5); border-bottom: 1px solid var(--border-color);">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                      <strong style="color:#f8fafc; font-size:0.9rem;">{{ grp.title }}</strong>
+                      <span class="badge" style="font-size:0.72rem;">{{ grp.items.length }}건</span>
+                    </div>
+                    <div style="display:flex; gap:0.35rem; align-items:center;">
+                      <span class="ai-chip chip-pass" style="font-size:0.72rem; padding:0.12rem 0.45rem; font-weight:700;">
+                        ✅ 통과 {{ grp.passCount }}
+                      </span>
+                      <span :class="['ai-chip', grp.failCount > 0 ? 'chip-fail' : 'chip-complexity']" style="font-size:0.72rem; padding:0.12rem 0.45rem; font-weight:700;">
+                        {{ grp.failCount > 0 ? '❌ 과락 ' + grp.failCount : '과락 0' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Group Table -->
+                  <div class="table-responsive">
+                    <table class="data-table mb-0" style="font-size:0.85rem;">
+                      <thead>
+                        <tr>
+                          <th style="width: 40%;">시험 항목명</th>
+                          <th style="width: 22%; text-align:center;">취득 점수</th>
+                          <th style="width: 20%; text-align:center;">비고 / 메모</th>
+                          <th style="width: 18%; text-align:center;">평가 일시</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="sc in grp.items" :key="sc.id || sc.examId">
+                          <td>
+                            <strong style="color:#f8fafc; font-size:0.88rem;">{{ sc.examTitle || '평가 항목' }}</strong>
+                          </td>
+                          <td style="text-align:center;">
+                            <span :class="['ai-chip', getScoreChipClass(sc.score)]" style="font-size:0.82rem; font-weight:800; padding:0.15rem 0.5rem;">
+                              {{ sc.score }}점
+                            </span>
+                          </td>
+                          <td style="text-align:center; color:var(--text-muted); font-size:0.8rem;">
+                            {{ sc.note || '-' }}
+                          </td>
+                          <td style="text-align:center; color:var(--text-muted); font-size:0.75rem;">
+                            {{ formatDate(sc.updatedAt) }}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </template>
         </div>
+      </div>
+    </div>
+
+
+    <!-- Bulk Student Import Modal -->
+    <div v-if="isBulkModalOpen" class="modal-overlay" @click.self="isBulkModalOpen = false">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>📋 학생 일괄 등록 (CSV / 텍스트 붙여넣기)</h3>
+          <button class="modal-close" @click="isBulkModalOpen = false">&times;</button>
+        </div>
+        <form @submit.prevent="handleBulkTextImport" class="modal-body">
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">
+            엑셀이나 텍스트에서 <strong>학번, 이름</strong> 목록을 복사하여 붙여넣으세요. (비밀번호는 학번으로 자동 설정됩니다)
+          </p>
+          <textarea 
+            v-model="bulkCsvText" 
+            class="form-textarea mb-3" 
+            rows="8"
+            style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;"
+            placeholder="예시 (쉼표 또는 탭 구분):
+1647021, 강상택
+1643716, 강현준
+1648035, 고아라"
+            required
+          ></textarea>
+          <div class="modal-footer" style="display:flex; gap:0.5rem; justify-content:flex-end;">
+            <button type="button" class="btn btn-outline" @click="isBulkModalOpen = false">취소</button>
+            <button type="submit" class="btn btn-primary" :disabled="isUploadingBulk">
+              {{ isUploadingBulk ? '등록 중...' : '📥 일괄 등록 실행' }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -284,6 +352,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/utils/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -307,11 +376,22 @@ interface ExamScoreItem {
   id?: number
   examId: number
   examTitle: string
+  examCategory?: string
+  examCategoryName?: string
+  perfectScore?: number
   studentSno: string
   studentName: string
   score: number
   note?: string
   updatedAt?: string
+}
+
+interface GroupedExamScore {
+  category: string
+  title: string
+  items: ExamScoreItem[]
+  passCount: number
+  failCount: number
 }
 
 const students = ref<StudentItem[]>([])
@@ -323,7 +403,37 @@ const searchQuery = ref('')
 const sortKey = ref<string>('sno')
 const sortOrder = ref<'asc' | 'desc'>('asc')
 
+
+const groupedExamScores = computed<GroupedExamScore[]>(() => {
+  const groups: Record<string, { category: string; title: string; items: ExamScoreItem[]; passCount: number; failCount: number }> = {
+    SUBJECT: { category: 'SUBJECT', title: '📝 과목평가', items: [], passCount: 0, failCount: 0 },
+    MONTHLY: { category: 'MONTHLY', title: '📅 월말평가', items: [], passCount: 0, failCount: 0 },
+    OTHER: { category: 'OTHER', title: '🎯 기타 평가', items: [], passCount: 0, failCount: 0 }
+  }
+
+  studentExamScores.value.forEach(sc => {
+    let cat = sc.examCategory || 'OTHER'
+    if (!groups[cat]) {
+      if (sc.examTitle?.includes('과목')) cat = 'SUBJECT'
+      else if (sc.examTitle?.includes('월말')) cat = 'MONTHLY'
+      else cat = 'OTHER'
+    }
+    const group = groups[cat] || groups['OTHER']
+    group.items.push(sc)
+    if (sc.score >= 60) {
+      group.passCount++
+    } else {
+      group.failCount++
+    }
+  })
+
+  return [groups.SUBJECT, groups.MONTHLY, groups.OTHER].filter(g => g.items.length > 0)
+})
+
 const isStudentModalOpen = ref(false)
+const isBulkModalOpen = ref(false)
+const isUploadingBulk = ref(false)
+const bulkCsvText = ref('')
 const editingStudent = ref({
   isNew: false,
   sno: '',
@@ -406,16 +516,13 @@ function getSortIcon(key: string) {
 
 async function loadStudents() {
   try {
-    const res = await fetch('/api/students')
-    if (res.ok) {
-      const data = await res.json()
-      students.value = Array.isArray(data) ? data : []
-      if (students.value.length > 0 && !selectedStudent.value) {
-        selectStudent(students.value[0])
-      } else if (selectedStudent.value) {
-        const refreshed = students.value.find(s => s.sno === selectedStudent.value?.sno)
-        if (refreshed) selectStudent(refreshed)
-      }
+    const { data } = await api.get<StudentItem[]>('/api/students')
+    students.value = Array.isArray(data) ? data : []
+    if (students.value.length > 0 && !selectedStudent.value) {
+      selectStudent(students.value[0])
+    } else if (selectedStudent.value) {
+      const refreshed = students.value.find(s => s.sno === selectedStudent.value?.sno)
+      if (refreshed) selectStudent(refreshed)
     }
   } catch (e) {
     console.error('Failed to load students:', e)
@@ -430,13 +537,8 @@ async function selectStudent(student: StudentItem) {
 async function loadStudentScores(sno: string) {
   isLoadingScores.value = true
   try {
-    const res = await fetch(`/api/exams/scores/student/${sno}`)
-    if (res.ok) {
-      const data = await res.json()
-      studentExamScores.value = Array.isArray(data) ? data : []
-    } else {
-      studentExamScores.value = []
-    }
+    const { data } = await api.get<ExamScoreItem[]>(`/api/exams/scores/student/${sno}`)
+    studentExamScores.value = Array.isArray(data) ? data : []
   } catch (e) {
     studentExamScores.value = []
   } finally {
@@ -470,45 +572,54 @@ function openEditStudentModal(st: StudentItem) {
   isStudentModalOpen.value = true
 }
 
-async function saveStudent() {
-  const url = editingStudent.value.isNew ? '/api/students' : `/api/students/${editingStudent.value.sno}`
-  const method = editingStudent.value.isNew ? 'POST' : 'PUT'
+
+async function handleBulkTextImport() {
+  if (!bulkCsvText.value.trim()) return
+  isUploadingBulk.value = true
 
   try {
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editingStudent.value)
-    })
-    const data = await res.json()
-    if (res.ok) {
+    const { data } = await api.post('/api/students/bulk', { csvText: bulkCsvText.value.trim() })
+    alert(`✅ ${data.message || '학생 일괄 등록이 완료되었습니다.'}`)
+    bulkCsvText.value = ''
+    isBulkModalOpen.value = false
+    await loadStudents()
+  } catch (e: any) {
+    alert('학생 일괄 등록 실패: ' + (e.response?.data?.message || '입력 내용을 확인해 주세요.'))
+  } finally {
+    isUploadingBulk.value = false
+  }
+}
+
+async function saveStudent() {
+  const url = editingStudent.value.isNew ? '/api/students' : `/api/students/${editingStudent.value.sno}`
+
+  try {
+    const { data } = editingStudent.value.isNew
+      ? await api.post(url, editingStudent.value)
+      : await api.put(url, editingStudent.value)
+
+    if (data.success || !data.message) {
       alert(editingStudent.value.isNew ? '✅ 학생이 등록되었습니다.' : '✅ 학생 정보가 수정되었습니다.')
       isStudentModalOpen.value = false
       await loadStudents()
     } else {
       alert('오류: ' + (data.message || '저장 실패'))
     }
-  } catch (e) {
-    alert('네트워크 오류')
+  } catch (e: any) {
+    alert('오류: ' + (e.response?.data?.message || '네트워크 오류'))
   }
 }
 
 async function resetPassword(st: StudentItem) {
   if (confirm(`'${st.name}' (${st.sno}) 학생의 비밀번호를 학번으로 초기화하시겠습니까?`)) {
     try {
-      const res = await fetch(`/api/students/${st.sno}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: st.name,
-          password: st.sno,
-          presentationPoint: st.presentationPoint
-        })
+      await api.put(`/api/students/${st.sno}`, {
+        name: st.name,
+        password: st.sno,
+        presentationPoint: st.presentationPoint
       })
-      if (res.ok) {
-        alert('🔑 비밀번호가 학번으로 초기화되었습니다.')
-        await loadStudents()
-      }
+      alert('🔑 비밀번호가 학번으로 초기화되었습니다.')
+      await loadStudents()
     } catch (e) {
       alert('비밀번호 초기화 실패')
     }
@@ -518,16 +629,21 @@ async function resetPassword(st: StudentItem) {
 async function deleteStudent(st: StudentItem) {
   if (confirm(`'${st.name}' (${st.sno}) 학생을 삭제하시겠습니까?`)) {
     try {
-      const res = await fetch(`/api/students/${st.sno}`, { method: 'DELETE' })
-      if (res.ok) {
-        alert('🗑️ 학생이 삭제되었습니다.')
-        if (selectedStudent.value?.sno === st.sno) selectedStudent.value = null
-        await loadStudents()
-      }
+      await api.delete(`/api/students/${st.sno}`)
+      alert('🗑️ 학생이 삭제되었습니다.')
+      if (selectedStudent.value?.sno === st.sno) selectedStudent.value = null
+      await loadStudents()
     } catch (e) {
       alert('학생 삭제 실패')
     }
   }
+}
+
+
+function getScoreChipClass(score: number) {
+  if (score < 60) return 'chip-fail' // 60점 미만 빨간색 경고
+  if (score >= 80) return 'chip-pass'
+  return 'chip-time'
 }
 
 function formatDate(dateStr?: string) {

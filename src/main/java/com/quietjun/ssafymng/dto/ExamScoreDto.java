@@ -15,6 +15,9 @@ public class ExamScoreDto {
     private Long id;
     private Long examId;
     private String examTitle;
+    private String examCategory;
+    private String examCategoryName;
+    private double perfectScore;
     private String studentSno;
     private String studentName;
     private double score;

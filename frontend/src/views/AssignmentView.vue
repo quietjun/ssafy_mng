@@ -599,6 +599,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProblemStore, type ProblemItem } from '@/stores/problems'
+import api from '@/utils/api'
 import hljs from 'highlight.js/lib/core'
 import java from 'highlight.js/lib/languages/java'
 import 'highlight.js/styles/atom-one-dark.css'
@@ -657,12 +658,9 @@ const imageInput = ref<HTMLInputElement | null>(null)
 
 async function loadAllStudents() {
   try {
-    const res = await fetch('/api/students')
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        allStudents.value = data.filter((s: any) => s.role !== 'ROLE_ADMIN' && !s.escape)
-      }
+    const { data } = await api.get<any[]>('/api/students')
+    if (Array.isArray(data)) {
+      allStudents.value = data.filter((s: any) => s.role !== 'ROLE_ADMIN' && !s.escape)
     }
   } catch (e) {
     console.error('Failed to load students:', e)
@@ -865,29 +863,20 @@ async function handleCreateProblem() {
   const selectedPlatform = problemStore.platforms.find(p => p.name === newProblem.value.platformName)
   const targetDate = newProblem.value.problemDate || todayStr
   try {
-    const res = await fetch('/api/problems', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: newProblem.value.title,
-        problemType: newProblem.value.problemType,
-        platformName: newProblem.value.platformName,
-        platformUrl: selectedPlatform?.url || '',
-        description: newProblem.value.description,
-        problemDate: targetDate
-      })
+    const { data } = await api.post('/api/problems', {
+      title: newProblem.value.title,
+      problemType: newProblem.value.problemType,
+      platformName: newProblem.value.platformName,
+      platformUrl: selectedPlatform?.url || '',
+      description: newProblem.value.description,
+      problemDate: targetDate
     })
-    if (res.ok) {
-      isCreating.value = false
-      newProblem.value = { problemDate: targetDate, problemType: '과제', platformName: '', title: '', description: '' }
-      alert('✅ 문제가 성공적으로 등록되었습니다.')
-      await loadProblems()
-    } else {
-      const err = await res.json().catch(() => ({}))
-      alert('문제 등록 실패: ' + (err.message || '다시 시도해 주세요.'))
-    }
+    isCreating.value = false
+    newProblem.value = { problemDate: targetDate, problemType: '과제', platformName: '', title: '', description: '' }
+    alert('✅ 문제가 성공적으로 등록되었습니다.')
+    await loadProblems()
   } catch (e: any) {
-    alert('문제 등록 중 오류가 발생했습니다.')
+    alert('문제 등록 실패: ' + (e.response?.data?.message || '다시 시도해 주세요.'))
   }
 }
 
@@ -895,25 +884,18 @@ async function handleUpdateProblem() {
   if (!problemStore.selectedProblem) return
   const selectedPlatform = problemStore.platforms.find(p => p.name === editProblem.value.platformName)
   try {
-    const res = await fetch(`/api/problems/${problemStore.selectedProblem.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: editProblem.value.title,
-        problemType: editProblem.value.problemType,
-        platformName: editProblem.value.platformName,
-        platformUrl: selectedPlatform?.url || '',
-        description: editProblem.value.description,
-        problemDate: editProblem.value.problemDate
-      })
+    const { data } = await api.put(`/api/problems/${problemStore.selectedProblem.id}`, {
+      title: editProblem.value.title,
+      problemType: editProblem.value.problemType,
+      platformName: editProblem.value.platformName,
+      platformUrl: selectedPlatform?.url || '',
+      description: editProblem.value.description,
+      problemDate: editProblem.value.problemDate
     })
-    if (res.ok) {
-      const updated = await res.json()
-      problemStore.selectProblem(updated)
-      isEditing.value = false
-      alert('✅ 문제가 성공적으로 수정되었습니다.')
-      await loadProblems()
-    }
+    problemStore.selectProblem(data)
+    isEditing.value = false
+    alert('✅ 문제가 성공적으로 수정되었습니다.')
+    await loadProblems()
   } catch (e: any) {
     alert('문제 수정 중 오류가 발생했습니다.')
   }
@@ -928,12 +910,10 @@ async function handleDeleteProblem() {
   
   if (!confirm(msg)) return
   try {
-    const res = await fetch(`/api/problems/${problemStore.selectedProblem.id}`, { method: 'DELETE' })
-    if (res.ok) {
-      alert('🗑️ 문제가 삭제되었습니다.')
-      problemStore.selectedProblem = null
-      await loadProblems()
-    }
+    await api.delete(`/api/problems/${problemStore.selectedProblem.id}`)
+    alert('🗑️ 문제가 삭제되었습니다.')
+    problemStore.selectedProblem = null
+    await loadProblems()
   } catch (e) {
     alert('문제 삭제 실패')
   }
@@ -942,20 +922,17 @@ async function handleDeleteProblem() {
 async function loadPeerSubmissions() {
   if (!problemStore.selectedProblem) return
   try {
-    const res = await fetch(`/api/submissions/problem/${problemStore.selectedProblem.id}`)
-    if (res.ok) {
-      const data = await res.json()
-      peerSubmissions.value = Array.isArray(data) ? data : []
+    const { data } = await api.get<any[]>(`/api/submissions/problem/${problemStore.selectedProblem.id}`)
+    peerSubmissions.value = Array.isArray(data) ? data : []
 
-      const submitted = peerSubmissions.value.length
-      const passes = peerSubmissions.value.filter(s => s.resultStatus === 'Pass').length
-      stats.value = {
-        totalStudents: 23,
-        submittedCount: submitted,
-        unsubmittedCount: Math.max(0, 23 - submitted),
-        passCount: passes,
-        failCount: submitted - passes
-      }
+    const submitted = peerSubmissions.value.length
+    const passes = peerSubmissions.value.filter(s => s.resultStatus === 'Pass').length
+    stats.value = {
+      totalStudents: 23,
+      submittedCount: submitted,
+      unsubmittedCount: Math.max(0, 23 - submitted),
+      passCount: passes,
+      failCount: submitted - passes
     }
   } catch (e) {
     peerSubmissions.value = []
@@ -1043,31 +1020,22 @@ async function handleInspectWithAi() {
   }
 
   try {
-    const res = await fetch('/api/submissions/ai-inspect', {
-      method: 'POST',
-      body: formData
-    })
-    if (res.ok) {
-      const result = await res.json()
-      step2Data.value = {
-        resultStatus: result.resultStatus || manualMetrics.value.resultStatus || 'Pass',
-        executionTime: result.executionTime || manualMetrics.value.executionTime || '',
-        memoryUsage: result.memoryUsage || manualMetrics.value.memoryUsage || '',
-        codeLength: result.codeLength || manualMetrics.value.codeLength || '',
-        submissionDateText: result.submissionDateText || '',
-        aiTimeComplexity: result.timeComplexity || '',
-        aiSpaceComplexity: result.spaceComplexity || '',
-        aiKeyIdea: result.keyIdea || '',
-        aiFeedback: result.feedback || '',
-        keywords: Array.isArray(result.keywords) ? [...result.keywords] : []
-      }
-      submissionStep.value = 2
-    } else {
-      const err = await res.json().catch(() => ({}))
-      alert('AI 검수 실패: ' + (err.message || '다시 시도해 주세요.'))
+    const { data: result } = await api.post('/api/submissions/ai-inspect', formData)
+    step2Data.value = {
+      resultStatus: result.resultStatus || manualMetrics.value.resultStatus || 'Pass',
+      executionTime: result.executionTime || manualMetrics.value.executionTime || '',
+      memoryUsage: result.memoryUsage || manualMetrics.value.memoryUsage || '',
+      codeLength: result.codeLength || manualMetrics.value.codeLength || '',
+      submissionDateText: result.submissionDateText || '',
+      aiTimeComplexity: result.timeComplexity || '',
+      aiSpaceComplexity: result.spaceComplexity || '',
+      aiKeyIdea: result.keyIdea || '',
+      aiFeedback: result.feedback || '',
+      keywords: Array.isArray(result.keywords) ? [...result.keywords] : []
     }
+    submissionStep.value = 2
   } catch (e: any) {
-    alert('AI 검수 중 네트워크 오류가 발생했습니다.')
+    alert('AI 검수 실패: ' + (e.response?.data?.message || '네트워크 오류가 발생했습니다.'))
   } finally {
     isInspecting.value = false
   }
@@ -1107,28 +1075,19 @@ async function handleFinalSubmit() {
   }
 
   try {
-    const res = await fetch('/api/submissions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    if (res.ok) {
-      alert('🎉 과제가 성공적으로 최종 제출되었습니다!')
-      submissionStep.value = 1
-      sourceCode.value = ''
-      attachedFileName.value = ''
-      attachedImage.value = null
-      imagePreviewUrl.value = ''
-      manualMetrics.value = { resultStatus: 'Pass', executionTime: '', memoryUsage: '', codeLength: '' }
-      await authStore.checkAuth()
-      await loadProblems()
-      await loadPeerSubmissions()
-    } else {
-      const err = await res.json().catch(() => ({}))
-      alert('제출 실패: ' + (err.message || '다시 시도해 주세요.'))
-    }
+    await api.post('/api/submissions', payload)
+    alert('🎉 과제가 성공적으로 최종 제출되었습니다!')
+    submissionStep.value = 1
+    sourceCode.value = ''
+    attachedFileName.value = ''
+    attachedImage.value = null
+    imagePreviewUrl.value = ''
+    manualMetrics.value = { resultStatus: 'Pass', executionTime: '', memoryUsage: '', codeLength: '' }
+    await authStore.checkAuth()
+    await loadProblems()
+    await loadPeerSubmissions()
   } catch (e: any) {
-    alert('최종 제출 중 오류가 발생했습니다.')
+    alert('제출 실패: ' + (e.response?.data?.message || '오류가 발생했습니다.'))
   } finally {
     isSubmittingFinal.value = false
   }

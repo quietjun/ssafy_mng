@@ -161,7 +161,7 @@
                 <div class="stat-label">최고 점수</div>
               </div>
               <div class="stat-card">
-                <div class="stat-num" style="color:var(--warning);">{{ selectedExam.minScore }}점</div>
+                <div class="stat-num" :style="{ color: (selectedExam.minScore < 60) ? '#f87171' : 'var(--warning)' }">{{ selectedExam.minScore }}점</div>
                 <div class="stat-label">최저 점수</div>
               </div>
             </div>
@@ -265,6 +265,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/utils/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -375,12 +376,9 @@ onMounted(async () => {
 
 async function loadStudents() {
   try {
-    const res = await fetch('/api/students')
-    if (res.ok) {
-      const data = await res.json()
-      if (Array.isArray(data)) {
-        allStudents.value = data.filter((s: any) => s.role !== 'ROLE_ADMIN' && !s.escape)
-      }
+    const { data } = await api.get<any[]>('/api/students')
+    if (Array.isArray(data)) {
+      allStudents.value = data.filter((s: any) => s.role !== 'ROLE_ADMIN' && !s.escape)
     }
   } catch (e) {
     console.error('Failed to load students:', e)
@@ -390,16 +388,13 @@ async function loadStudents() {
 async function loadExams() {
   isLoadingExams.value = true
   try {
-    const res = await fetch('/api/exams')
-    if (res.ok) {
-      const data = await res.json()
-      exams.value = Array.isArray(data) ? data : []
-      if (exams.value.length > 0 && !selectedExam.value) {
-        selectExam(exams.value[0])
-      } else if (selectedExam.value) {
-        const refreshed = exams.value.find(e => e.id === selectedExam.value?.id)
-        if (refreshed) selectedExam.value = refreshed
-      }
+    const { data } = await api.get<ExamItem[]>('/api/exams')
+    exams.value = Array.isArray(data) ? data : []
+    if (exams.value.length > 0 && !selectedExam.value) {
+      selectExam(exams.value[0])
+    } else if (selectedExam.value) {
+      const refreshed = exams.value.find(e => e.id === selectedExam.value?.id)
+      if (refreshed) selectExam(refreshed)
     }
   } catch (e) {
     console.error('Failed to load exams:', e)
@@ -412,11 +407,8 @@ async function selectExam(exam: ExamItem) {
   selectedExam.value = exam
   isEditingExam.value = false
   try {
-    const res = await fetch(`/api/exams/${exam.id}/scores`)
-    if (res.ok) {
-      const data = await res.json()
-      examScores.value = Array.isArray(data) ? data : []
-    }
+    const { data } = await api.get<ExamScoreItem[]>(`/api/exams/${exam.id}/scores`)
+    examScores.value = Array.isArray(data) ? data : []
   } catch (e) {
     examScores.value = []
   }
@@ -424,30 +416,20 @@ async function selectExam(exam: ExamItem) {
 
 async function handleCreateExam() {
   try {
-    const res = await fetch('/api/exams', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newExam.value)
-    })
-    if (res.ok) {
-      const created = await res.json()
-      alert(`✅ '${created.title}' 시험이 등록되었습니다.`)
-      isCreatingExam.value = false
-      newExam.value = {
-        title: '',
-        category: 'MONTHLY',
-        examDate: new Date().toISOString().split('T')[0],
-        perfectScore: 100,
-        description: ''
-      }
-      await loadExams()
-      selectExam(created)
-    } else {
-      const err = await res.json().catch(() => ({}))
-      alert('시험 등록 실패: ' + (err.message || '다시 시도해 주세요.'))
+    const { data: created } = await api.post<ExamItem>('/api/exams', newExam.value)
+    alert(`✅ '${created.title}' 시험이 등록되었습니다.`)
+    isCreatingExam.value = false
+    newExam.value = {
+      title: '',
+      category: 'MONTHLY',
+      examDate: new Date().toISOString().split('T')[0],
+      perfectScore: 100,
+      description: ''
     }
-  } catch (e) {
-    alert('시험 등록 중 네트워크 오류가 발생했습니다.')
+    await loadExams()
+    selectExam(created)
+  } catch (e: any) {
+    alert('시험 등록 실패: ' + (e.response?.data?.message || '네트워크 오류가 발생했습니다.'))
   }
 }
 
@@ -466,32 +448,23 @@ function startEditExam(exam: ExamItem) {
 
 async function handleUpdateExam() {
   try {
-    const res = await fetch(`/api/exams/${editExam.value.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editExam.value)
-    })
-    if (res.ok) {
-      const updated = await res.json()
-      alert('✅ 시험 정보가 수정되었습니다.')
-      isEditingExam.value = false
-      await loadExams()
-      selectExam(updated)
-    }
-  } catch (e) {
-    alert('시험 수정 실패')
+    const { data: updated } = await api.put<ExamItem>(`/api/exams/${editExam.value.id}`, editExam.value)
+    alert('✅ 시험 정보가 수정되었습니다.')
+    isEditingExam.value = false
+    await loadExams()
+    selectExam(updated)
+  } catch (e: any) {
+    alert('시험 수정 실패: ' + (e.response?.data?.message || '네트워크 오류'))
   }
 }
 
 async function handleDeleteExam(exam: ExamItem) {
   if (confirm(`'${exam.title}' 시험 항목과 등록된 학생 점수를 정말 삭제하시겠습니까?`)) {
     try {
-      const res = await fetch(`/api/exams/${exam.id}`, { method: 'DELETE' })
-      if (res.ok) {
-        alert('🗑️ 시험이 삭제되었습니다.')
-        if (selectedExam.value?.id === exam.id) selectedExam.value = null
-        await loadExams()
-      }
+      await api.delete(`/api/exams/${exam.id}`)
+      alert('🗑️ 시험이 삭제되었습니다.')
+      if (selectedExam.value?.id === exam.id) selectedExam.value = null
+      await loadExams()
     } catch (e) {
       alert('시험 삭제 실패')
     }
@@ -506,27 +479,17 @@ async function handleBulkImportScores() {
   }
   isSubmittingBulk.value = true
   try {
-    const res = await fetch('/api/exams/scores/bulk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        examId: selectedExam.value.id,
-        csvText: bulkCsvText.value.trim()
-      })
+    const { data: result } = await api.post('/api/exams/scores/bulk', {
+      examId: selectedExam.value.id,
+      csvText: bulkCsvText.value.trim()
     })
-    if (res.ok) {
-      const result = await res.json()
-      alert(`✅ ${result.message}`)
-      bulkCsvText.value = ''
-      showBulkBox.value = false
-      await loadExams()
-      if (selectedExam.value) await selectExam(selectedExam.value)
-    } else {
-      const err = await res.json().catch(() => ({}))
-      alert('점수 일괄 등록 실패: ' + (err.message || '입력 데이터를 확인해 주세요.'))
-    }
-  } catch (e) {
-    alert('점수 등록 중 오류가 발생했습니다.')
+    alert(`✅ ${result.message}`)
+    bulkCsvText.value = ''
+    showBulkBox.value = false
+    await loadExams()
+    if (selectedExam.value) await selectExam(selectedExam.value)
+  } catch (e: any) {
+    alert('점수 일괄 등록 실패: ' + (e.response?.data?.message || '입력 데이터를 확인해 주세요.'))
   } finally {
     isSubmittingBulk.value = false
   }
@@ -544,20 +507,14 @@ function openSingleScoreModal(st: { sno: string; name: string; score: number; no
 async function handleSaveSingleScore() {
   if (!selectedExam.value || !singleScoreModal.value) return
   try {
-    const res = await fetch(`/api/exams/${selectedExam.value.id}/scores`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        studentSno: singleScoreModal.value.studentSno,
-        score: singleScoreModal.value.score,
-        note: singleScoreModal.value.note
-      })
+    await api.post(`/api/exams/${selectedExam.value.id}/scores`, {
+      studentSno: singleScoreModal.value.studentSno,
+      score: singleScoreModal.value.score,
+      note: singleScoreModal.value.note
     })
-    if (res.ok) {
-      singleScoreModal.value = null
-      await loadExams()
-      if (selectedExam.value) await selectExam(selectedExam.value)
-    }
+    singleScoreModal.value = null
+    await loadExams()
+    if (selectedExam.value) await selectExam(selectedExam.value)
   } catch (e) {
     alert('점수 저장 중 오류가 발생했습니다.')
   }
@@ -570,10 +527,10 @@ function getCategoryBadgeClass(category?: string) {
 }
 
 function getScoreChipClass(score: number, perfectScore: number) {
+  if (score < 60) return 'chip-fail' // 60점 미만 빨간색 경고
   const ratio = score / (perfectScore || 100)
   if (ratio >= 0.8) return 'chip-pass'
-  if (ratio >= 0.6) return 'chip-time'
-  return 'chip-fail'
+  return 'chip-time'
 }
 </script>
 

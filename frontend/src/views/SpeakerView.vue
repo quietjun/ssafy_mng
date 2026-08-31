@@ -166,6 +166,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/utils/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -301,36 +302,27 @@ async function handleSeatCellClick(r: number, c: number) {
 // 좌석 맞교환 / 이동 API 호출 및 실시간 상태 동기화
 async function executeSeatSwap(srcRow: number, srcCol: number, targetRow: number, targetCol: number) {
   try {
-    const res = await fetch('/api/speaker/swap', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        srcRow,
-        srcCol,
-        targetRow,
-        targetCol
-      })
+    await api.post('/api/speaker/swap', {
+      srcRow,
+      srcCol,
+      targetRow,
+      targetCol
     })
 
-    if (res.ok) {
-      // 프론트엔드 상태 즉시 스왑
-      const s1 = students.value.find(s => s.srow === srcRow && s.scol === srcCol)
-      const s2 = students.value.find(s => s.srow === targetRow && s.scol === targetCol)
+    // 프론트엔드 상태 즉시 스왑
+    const s1 = students.value.find(s => s.srow === srcRow && s.scol === srcCol)
+    const s2 = students.value.find(s => s.srow === targetRow && s.scol === targetCol)
 
-      if (s1) {
-        s1.srow = targetRow
-        s1.scol = targetCol
-      }
-      if (s2) {
-        s2.srow = srcRow
-        s2.scol = srcCol
-      }
-    } else {
-      alert('좌석 이동 중 오류가 발생했습니다.')
-      await loadLayout()
+    if (s1) {
+      s1.srow = targetRow
+      s1.scol = targetCol
+    }
+    if (s2) {
+      s2.srow = srcRow
+      s2.scol = srcCol
     }
   } catch (e) {
-    alert('서버와 통신 중 오류가 발생했습니다.')
+    alert('좌석 이동 중 오류가 발생했습니다.')
     await loadLayout()
   }
 }
@@ -370,27 +362,24 @@ function getSectionLabel(idx: number) {
 
 async function loadLayout() {
   try {
-    const res = await fetch('/api/speaker/layout')
-    if (res.ok) {
-      const data = await res.json()
-      rows.value = data.rows || 6
-      cols.value = data.cols || 5
-      
-      if (Array.isArray(data.colGroups) && data.colGroups.length > 0) {
-        colGroups.value = data.colGroups
-      } else if (data.colPattern || data.colsPattern) {
-        const pattern = (data.colPattern || data.colsPattern).trim()
-        colGroups.value = pattern.split(/[,: ]+/).map((p: string) => parseInt(p, 10)).filter((n: number) => !isNaN(n) && n > 0)
-      } else {
-        colGroups.value = [2, 3]
-      }
-
-      students.value = data.students || []
-      candidateMap.value = {}
-      students.value.forEach(s => {
-        candidateMap.value[s.sno] = true
-      })
+    const { data } = await api.get<any>('/api/speaker/layout')
+    rows.value = data.rows || 6
+    cols.value = data.cols || 5
+    
+    if (Array.isArray(data.colGroups) && data.colGroups.length > 0) {
+      colGroups.value = data.colGroups
+    } else if (data.colPattern || data.colsPattern) {
+      const pattern = (data.colPattern || data.colsPattern).trim()
+      colGroups.value = pattern.split(/[,: ]+/).map((p: string) => parseInt(p, 10)).filter((n: number) => !isNaN(n) && n > 0)
+    } else {
+      colGroups.value = [2, 3]
     }
+
+    students.value = data.students || []
+    candidateMap.value = {}
+    students.value.forEach(s => {
+      candidateMap.value[s.sno] = true
+    })
   } catch (e) {
     console.error('Failed to load speaker layout:', e)
   }
@@ -489,17 +478,10 @@ async function runLottery() {
       highlightSno.value = null
 
       try {
-        const res = await fetch('/api/speaker/draw', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(candidateSnos)
-        })
-        if (res.ok) {
-          const result = await res.json()
-          winner.value = result
-          winnerSno.value = result.sno
-          await loadLayout()
-        }
+        const { data: result } = await api.post<any>('/api/speaker/draw', candidateSnos)
+        winner.value = result
+        winnerSno.value = result.sno
+        await loadLayout()
       } catch (e: any) {
         alert('추첨 중 오류가 발생했습니다.')
       } finally {

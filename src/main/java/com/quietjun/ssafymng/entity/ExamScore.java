@@ -53,10 +53,17 @@ public class ExamScore {
     private LocalDateTime updatedAt;
 
     public ExamScoreDto toDto() {
+        String cat = (exam != null && exam.getCategory() != null) ? exam.getCategory().name() : "OTHER";
+        String catName = (exam != null && exam.getCategory() != null) ? exam.getCategory().getDescription() : "기타평가";
+        double pScore = (exam != null) ? exam.getPerfectScore() : 100.0;
+
         return ExamScoreDto.builder()
                 .id(id)
                 .examId(exam != null ? exam.getId() : null)
                 .examTitle(exam != null ? exam.getTitle() : null)
+                .examCategory(cat)
+                .examCategoryName(catName)
+                .perfectScore(pScore)
                 .studentSno(student != null ? student.getSno() : null)
                 .studentName(student != null ? student.getName() : null)
                 .score(score)

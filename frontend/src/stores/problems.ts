@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import api from '@/utils/api'
 
 export interface ProblemItem {
   id: number
@@ -30,12 +31,9 @@ export const useProblemStore = defineStore('problems', () => {
 
   async function loadPlatforms() {
     try {
-      const res = await fetch('/api/platforms')
-      if (res.ok) {
-        const data: PlatformSite[] = await res.json()
-        if (Array.isArray(data)) {
-          platforms.value = data
-        }
+      const { data } = await api.get<PlatformSite[]>('/api/platforms')
+      if (Array.isArray(data)) {
+        platforms.value = data
       }
     } catch (e) {
       console.error('Failed to load platforms:', e)
@@ -49,17 +47,14 @@ export const useProblemStore = defineStore('problems', () => {
       if (startDate && endDate) {
         url += `?startDate=${startDate}&endDate=${endDate}`
       }
-      const res = await fetch(url)
-      if (res.ok) {
-        const data: ProblemItem[] = await res.json()
-        problems.value = Array.isArray(data) ? data : []
-        if (problems.value.length > 0) {
-          if (!selectedProblem.value || !problems.value.some(p => p.id === selectedProblem.value?.id)) {
-            selectedProblem.value = problems.value[0]
-          }
-        } else {
-          selectedProblem.value = null
+      const { data } = await api.get<ProblemItem[]>(url)
+      problems.value = Array.isArray(data) ? data : []
+      if (problems.value.length > 0) {
+        if (!selectedProblem.value || !problems.value.some(p => p.id === selectedProblem.value?.id)) {
+          selectedProblem.value = problems.value[0]
         }
+      } else {
+        selectedProblem.value = null
       }
     } catch (e) {
       console.error('Failed to load weekly/range problems:', e)
@@ -73,17 +68,14 @@ export const useProblemStore = defineStore('problems', () => {
   async function loadDailyProblems(date: string) {
     isLoading.value = true
     try {
-      const res = await fetch(`/api/problems?date=${date}`)
-      if (res.ok) {
-        const data: ProblemItem[] = await res.json()
-        problems.value = Array.isArray(data) ? data : []
-        if (problems.value.length > 0) {
-          if (!selectedProblem.value || !problems.value.some(p => p.id === selectedProblem.value?.id)) {
-            selectedProblem.value = problems.value[0]
-          }
-        } else {
-          selectedProblem.value = null
+      const { data } = await api.get<ProblemItem[]>(`/api/problems?date=${date}`)
+      problems.value = Array.isArray(data) ? data : []
+      if (problems.value.length > 0) {
+        if (!selectedProblem.value || !problems.value.some(p => p.id === selectedProblem.value?.id)) {
+          selectedProblem.value = problems.value[0]
         }
+      } else {
+        selectedProblem.value = null
       }
     } catch (e) {
       console.error('Failed to load daily problems:', e)
