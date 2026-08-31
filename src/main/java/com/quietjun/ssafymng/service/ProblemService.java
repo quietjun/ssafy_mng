@@ -157,29 +157,26 @@ public class ProblemService {
             log.warn("HTML 크롤링 실패 (AI 지식 기반으로 폴백 진행): {}", e.getMessage());
         }
 
-        String prompt = String.format("""
-            You are an expert algorithm problem metadata extractor.
-            Given the algorithm problem URL, extracted title, and HTML snippet, determine the official Problem Name, Number, Platform (e.g. SWEA, Baekjoon/BOJ, Programmers, LeetCode), and Difficulty/Tier (if known).
-
-            URL: %s
-            Extracted Web Title: %s
-            HTML Snippet: %s
-
-            Instructions:
-            - If it is SW Expert Academy (swexpertacademy.com):
-              Identify the exact SWEA problem number and title matching the contestProbId or URL (e.g. 'SWEA 2072. 홀수만 더하기 (D1)' or 'SWEA 1204. 최빈수 구하기 (D2)').
-            - If it is Baekjoon (acmicpc.net):
-              Format title like '백준 12865. 평범한 배낭 (골드5)' or 'BOJ 1000. A+B'.
-            - If it is Programmers:
-              Format title like '프로그래머스: 타겟 넘버 (Lv.2)'.
-            - In the description field, ONLY provide the original problem URL link as '문제 링크: %s' without any problem summary or text explanation.
-
-            Output ONLY valid JSON in the following schema without markdown backticks:
-            {
-              "title": "SWEA 2072. 홀수만 더하기 (D1)",
-              "description": "문제 링크: %s"
-            }
-            """, url.trim(), ogTitle, rawHtmlText, url.trim(), url.trim());
+        String prompt = String.format(
+            "You are an expert algorithm problem metadata extractor.\n" +
+            "Given the algorithm problem URL, extracted title, and HTML snippet, determine the official Problem Name, Number, Platform (e.g. SWEA, Baekjoon/BOJ, Programmers, LeetCode), and Difficulty/Tier (if known).\n\n" +
+            "URL: %s\n" +
+            "Extracted Web Title: %s\n" +
+            "HTML Snippet: %s\n\n" +
+            "Instructions:\n" +
+            "- If it is SW Expert Academy (swexpertacademy.com):\n" +
+            "  Identify the exact SWEA problem number and title (e.g. SWEA 2072. 홀수만 더하기 (D1)).\n" +
+            "- If it is Baekjoon (acmicpc.net):\n" +
+            "  Format title like 백준 12865. 평범한 배낭 (골드5).\n" +
+            "- If it is Programmers:\n" +
+            "  Format title like 프로그래머스: 타겟 넘버 (Lv.2).\n" +
+            "- In the description field, ONLY provide the original problem URL link as \"문제 링크: %s\" without any problem summary.\n\n" +
+            "Output ONLY valid JSON in the following schema without markdown backticks:\n" +
+            "{\n" +
+            "  \"title\": \"SWEA 2072. 홀수만 더하기 (D1)\",\n" +
+            "  \"description\": \"문제 링크: %s\"\n" +
+            "}\n",
+            url.trim(), ogTitle, rawHtmlText, url.trim(), url.trim());
 
         try {
             String response = chatModel.call(prompt);

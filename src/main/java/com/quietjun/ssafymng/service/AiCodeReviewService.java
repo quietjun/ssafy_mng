@@ -38,52 +38,45 @@ public class AiCodeReviewService {
         }
 
         try {
-            String promptText = """
-                당신은 알고리즘 및 Java 코드 리뷰 전문가이자 채점 결과 엄격 검수관입니다.
-                제공된 학생의 Java 소스코드와 첨부된 [채점 결과 캡처 이미지]를 분석하여 JSON으로 응답해주세요.
-
-                [중요 검수 규칙]
-                1. 캡처 이미지에서 다음 4가지 핵심 채점 정보를 반드시 판별하세요:
-                   - resultStatus: 채점 결과 (예: Pass, 맞았습니다!!, 100점, Fail, 오답, 시간초과 등)
-                   - memoryUsage: 메모리 사용량 (예: 396 kb, 15,200 KB, 54MB 등)
-                   - executionTime: 실행 시간 (예: 4 ms, 120 ms, 0.45s 등)
-                   - codeLength: 코드 길이 (예: 204 B, 1,234 B 등 - 캡처에 없으면 소스코드 바이트 길이 자동 계산)
-                   - submissionDateText: 제출 일시 (캡처에 보이는 일시 혹은 현재 일시)
-
-                2. 채점 결과 이미지 유효성 판정:
-                   - 만약 첨부된 이미지가 알고리즘 사이트(SWEA, 백준, 프로그래머스 등)의 채점 결과 화면이 아니거나,
-                   - 결과(Pass/Fail/맞았습니다), 실행시간, 메모리 등의 채점 정보를 전혀 식별할 수 없는 엉뚱한 이미지인 경우:
-                     "isValidCapture": false,
-                     "errorMessage": "채점 결과 화면(결과, 메모리, 실행시간 등)을 인식할 수 없습니다."
-                   - 올바른 채점 결과 화면이거나 이미지가 없는 경우:
-                     "isValidCapture": true,
-                     "errorMessage": ""
-
-                3. Java 소스 코드 분석:
-                   - timeComplexity: 시간 복잡도 (빅오 표기법, 예: O(N log N), O(N), O(V + E) 등)
-                   - spaceComplexity: 공간 복잡도 (빅오 표기법, 예: O(N), O(1) 등)
-                   - keyIdea: 알고리즘의 핵심 해결 아이디어 및 자료구조 요약 (한국어로 2~3문장 요약)
-                   - feedback: 코드의 장점 또는 가독성/시간/메모리 최적화 관점의 짧은 피드백 (한국어 1~2문장)
-                   - keywords: 해당 알고리즘 문제 해결 및 코드에 실제로 사용된 가장 중요한 핵심 키워드(알고리즘 기법, 자료구조, 핵심 개념 등)를 최소 3개에서 최대 10개까지 유의미한 것만 선별하여 문자열 배열로 추출 (억지로 10개를 채우지 말고 실제 코드와 관련된 것만 추출, 예: ["BFS", "큐", "방문배열", "최단경로"])
-
-                [반드시 아래 JSON 포맷으로만 출력하세요. 마크다운 백틱 없이 순수 JSON만 출력]:
-                {
-                  "resultStatus": "Pass",
-                  "memoryUsage": "396 kb",
-                  "executionTime": "4 ms",
-                  "codeLength": "204 B",
-                  "submissionDateText": "2026-08-28 10:51",
-                  "timeComplexity": "O(N log N)",
-                  "spaceComplexity": "O(N)",
-                  "keyIdea": "...",
-                  "feedback": "...",
-                  "keywords": ["핵심키워드1", "핵심키워드2", "핵심키워드3"],
-                  "isValidCapture": true,
-                  "errorMessage": ""
-                }
-
-                [학생의 Java 소스코드]:
-                """ + sourceCode;
+            String promptText = "당신은 알고리즘 및 Java 코드 리뷰 전문가이자 채점 결과 엄격 검수관입니다.\n" +
+                "제공된 학생의 Java 소스코드와 첨부된 [채점 결과 캡처 이미지]를 분석하여 JSON으로 응답해주세요.\n\n" +
+                "[중요 검수 규칙]\n" +
+                "1. 캡처 이미지에서 다음 4가지 핵심 채점 정보를 반드시 판별하세요:\n" +
+                "   - resultStatus: 채점 결과 (예: Pass, 맞았습니다!!, 100점, Fail, 오답, 시간초과 등)\n" +
+                "   - memoryUsage: 메모리 사용량 (예: 396 kb, 15,200 KB, 54MB 등)\n" +
+                "   - executionTime: 실행 시간 (예: 4 ms, 120 ms, 0.45s 등)\n" +
+                "   - codeLength: 코드 길이 (예: 204 B, 1,234 B 등 - 캡처에 없으면 소스코드 바이트 길이 자동 계산)\n" +
+                "   - submissionDateText: 제출 일시 (캡처에 보이는 일시 혹은 현재 일시)\n\n" +
+                "2. 채점 결과 이미지 유효성 판정:\n" +
+                "   - 만약 첨부된 이미지가 알고리즘 사이트(SWEA, 백준, 프로그래머스 등)의 채점 결과 화면이 아니거나,\n" +
+                "   - 결과(Pass/Fail/맞았습니다), 실행시간, 메모리 등의 채점 정보를 전혀 식별할 수 없는 엉뚱한 이미지인 경우:\n" +
+                "     \"isValidCapture\": false,\n" +
+                "     \"errorMessage\": \"채점 결과 화면(결과, 메모리, 실행시간 등)을 인식할 수 없습니다.\"\n" +
+                "   - 올바른 채점 결과 화면이거나 이미지가 없는 경우:\n" +
+                "     \"isValidCapture\": true,\n" +
+                "     \"errorMessage\": \"\"\n\n" +
+                "3. Java 소스 코드 분석:\n" +
+                "   - timeComplexity: 시간 복잡도 (빅오 표기법, 예: O(N log N), O(N), O(V + E) 등)\n" +
+                "   - spaceComplexity: 공간 복잡도 (빅오 표기법, 예: O(N), O(1) 등)\n" +
+                "   - keyIdea: 알고리즘의 핵심 해결 아이디어 및 자료구조 요약 (한국어로 2~3문장 요약)\n" +
+                "   - feedback: 코드의 장점 또는 가독성/시간/메모리 최적화 관점의 짧은 피드백 (한국어 1~2문장)\n" +
+                "   - keywords: 해당 알고리즘 문제 해결 및 코드에 실제로 사용된 가장 중요한 핵심 키워드를 배열로 추출\n\n" +
+                "[반드시 아래 JSON 포맷으로만 출력하세요]:\n" +
+                "{\n" +
+                "  \"resultStatus\": \"Pass\",\n" +
+                "  \"memoryUsage\": \"396 kb\",\n" +
+                "  \"executionTime\": \"4 ms\",\n" +
+                "  \"codeLength\": \"204 B\",\n" +
+                "  \"submissionDateText\": \"2026-08-28 10:51\",\n" +
+                "  \"timeComplexity\": \"O(N log N)\",\n" +
+                "  \"spaceComplexity\": \"O(N)\",\n" +
+                "  \"keyIdea\": \"...\",\n" +
+                "  \"feedback\": \"...\",\n" +
+                "  \"keywords\": [\"BFS\", \"큐\"],\n" +
+                "  \"isValidCapture\": true,\n" +
+                "  \"errorMessage\": \"\"\n" +
+                "}\n\n" +
+                "[학생의 Java 소스코드]:\n" + sourceCode;
 
             ChatClient chatClient = ChatClient.create(chatModel);
             String aiResponseText = null;

@@ -88,7 +88,7 @@ class ProblemServiceTest {
                     .build();
 
             given(problemRepository.findById(1L)).willReturn(Optional.of(problem));
-            given(submissionRepository.countByProblem(problem)).willReturn(5);
+            given(submissionRepository.countByProblem(problem)).willReturn(5L);
 
             // when
             ProblemDto result = problemService.getProblem(1L);
