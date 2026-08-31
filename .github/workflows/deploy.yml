@@ -38,14 +38,14 @@ jobs:
     - name: Build Spring Boot App
       run: ./mvnw clean package -DskipTests
 
-    - name: Copy JAR to OCI as /home/ubuntu/app.jar
+    - name: Copy JAR to OCI
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.OCI_HOST }}
         username: ${{ secrets.OCI_USERNAME }}
         key: ${{ secrets.OCI_SSH_KEY }}
         source: "target/ssafymng-0.0.1-SNAPSHOT.jar"
-        target: "/home/ubuntu/app.jar"
+        target: "/home/ubuntu"
         strip_components: 1
 
     - name: Run Deploy Script on Server
@@ -56,5 +56,6 @@ jobs:
         key: ${{ secrets.OCI_SSH_KEY }}
         script: |
           cd /home/ubuntu
+          mv ssafymng-0.0.1-SNAPSHOT.jar app.jar
           chmod +x run.sh
           ./run.sh
