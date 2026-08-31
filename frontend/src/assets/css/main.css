@@ -796,6 +796,12 @@ input[type="date"].form-input {
 }
 
 /* File Dropzone */
+.hidden {
+    display: none !important;
+}
+.file-dropzone input[type="file"] {
+    display: none !important;
+}
 .file-dropzone {
     border: 2px dashed var(--border-color);
     border-radius: var(--radius-md);
@@ -804,6 +810,9 @@ input[type="date"].form-input {
     cursor: pointer;
     background: rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
+}
+.image-dropzone {
+    cursor: default;
 }
 .file-dropzone:hover {
     border-color: var(--primary);

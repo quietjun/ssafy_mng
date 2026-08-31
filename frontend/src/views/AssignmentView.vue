@@ -307,7 +307,7 @@
                   <div class="radio-toggle-group" style="margin-bottom:0;">
                     <label class="radio-badge-label">
                       <input type="radio" v-model="captureMode" value="paste_image">
-                      <span class="type-tag tag-hw">🖼️ 캡처 이미지 (클릭 or Ctrl+V)</span>
+                      <span class="type-tag tag-hw">🖼️ 캡처 이미지 (Ctrl+V 붙여넣기)</span>
                     </label>
                     <label class="radio-badge-label">
                       <input type="radio" v-model="captureMode" value="manual_text">
@@ -316,11 +316,15 @@
                   </div>
                 </div>
 
-                <!-- 1) Image Dropzone & Ctrl+V Paste -->
-                <div v-if="captureMode === 'paste_image'" class="file-dropzone image-dropzone" @click="imageInput?.click()">
-                  <input ref="imageInput" type="file" accept="image/*" class="hidden" @change="handleImageChange">
+                <!-- 1) Image Dropzone & Ctrl+V Paste (No File Picker) -->
+                <div 
+                  v-if="captureMode === 'paste_image'" 
+                  class="file-dropzone image-dropzone"
+                  @dragover.prevent
+                  @drop.prevent="handleImageDrop"
+                >
                   <div v-if="!imagePreviewUrl" class="dropzone-text">
-                    🖼️ 클릭하여 이미지 첨부 또는 <strong>화면 캡처 후 Ctrl+V 로 바로 붙여넣기</strong>
+                    📋 화면 캡처 후 <strong>Ctrl+V 로 바로 붙여넣기</strong>
                   </div>
                   <div v-else class="capture-preview">
                     <img :src="imagePreviewUrl" alt="Capture Preview" style="max-height:130px; border-radius:6px;">
@@ -741,6 +745,21 @@ function handleGlobalPaste(e: ClipboardEvent) {
         break
       }
     }
+  }
+}
+
+function handleImageDrop(e: DragEvent) {
+  const files = e.dataTransfer?.files
+  if (!files || files.length === 0) return
+  const file = files[0]
+  if (file.type.startsWith('image/')) {
+    attachedImage.value = file
+    captureMode.value = 'paste_image'
+    const reader = new FileReader()
+    reader.onload = (evt) => {
+      imagePreviewUrl.value = evt.target?.result as string
+    }
+    reader.readAsDataURL(file)
   }
 }
 

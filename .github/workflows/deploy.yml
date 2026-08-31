@@ -1,0 +1,60 @@
+name: Build and Deploy to Oracle Cloud (Ubuntu)
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm ci
+        npx vite build
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: 'maven'
+
+    - name: Make Maven Wrapper Executable
+      run: chmod +x mvnw
+
+    - name: Build Spring Boot App
+      run: ./mvnw clean package -DskipTests
+
+    - name: Copy JAR to OCI as /home/ubuntu/app.jar
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.OCI_HOST }}
+        username: ${{ secrets.OCI_USERNAME }}
+        key: ${{ secrets.OCI_SSH_KEY }}
+        source: "target/ssafymng-0.0.1-SNAPSHOT.jar"
+        target: "/home/ubuntu/app.jar"
+        strip_components: 1
+
+    - name: Run Deploy Script on Server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.OCI_HOST }}
+        username: ${{ secrets.OCI_USERNAME }}
+        key: ${{ secrets.OCI_SSH_KEY }}
+        script: |
+          cd /home/ubuntu
+          chmod +x run.sh
+          ./run.sh
