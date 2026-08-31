@@ -1,8 +1,8 @@
 <template>
   <div class="settings-page">
     <div class="content-split">
-      <!-- Left: Student Account Management (No Vertical Scroll, Full List View) -->
-      <div class="split-col left-col" style="flex: 1.35; min-width: 480px;">
+      <!-- Left: Student Account Management (1:1 Ratio, Sortable Columns) -->
+      <div class="split-col left-col" style="flex: 1; min-width: 0;">
         <div class="card">
           <div class="card-header">
             <div style="display:flex; align-items:center; gap:0.5rem;">
@@ -23,32 +23,32 @@
             <button v-if="searchQuery" class="btn btn-sm btn-outline" @click="searchQuery = ''">초기화</button>
           </div>
 
-          <!-- Student Table (Natural Height, No Scrollbars, 100% Fit) -->
+          <!-- Student Table -->
           <div class="table-scroll-container">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th style="width: 22%;">학번 (SNO)</th>
-                  <th style="width: 16%;">이름</th>
-                  <th style="width: 14%; text-align:center;">발표 Lv</th>
-                  <th style="width: 18%; text-align:center;">비번 상태</th>
-                  <th style="width: 30%; text-align:center;">관리</th>
+                  <th style="width: 32%; cursor: pointer; user-select: none;" @click="toggleSort('sno')" title="학번순 정렬">
+                    학번 (SNO) <span style="font-size:0.72rem; opacity:0.8; margin-left:0.15rem;">{{ getSortIcon('sno') }}</span>
+                  </th>
+                  <th style="width: 26%; cursor: pointer; user-select: none;" @click="toggleSort('name')" title="이름순 정렬">
+                    이름 <span style="font-size:0.72rem; opacity:0.8; margin-left:0.15rem;">{{ getSortIcon('name') }}</span>
+                  </th>
+                  <th style="width: 22%; text-align:center; cursor: pointer; user-select: none;" @click="toggleSort('passwordChanged')" title="비밀번호 상태순 정렬">
+                    비번 상태 <span style="font-size:0.72rem; opacity:0.8; margin-left:0.15rem;">{{ getSortIcon('passwordChanged') }}</span>
+                  </th>
+                  <th style="width: 20%; text-align:center;">관리</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="filteredStudents.length === 0">
-                  <td colspan="5" style="text-align:center; padding: 2rem;" class="empty-state">
+                  <td colspan="4" style="text-align:center; padding: 2rem;" class="empty-state">
                     {{ searchQuery ? '검색 결과와 일치하는 학생이 없습니다.' : '등록된 학생이 없습니다.' }}
                   </td>
                 </tr>
                 <tr v-for="s in filteredStudents" :key="s.sno">
                   <td><strong>{{ s.sno }}</strong></td>
                   <td style="font-weight: 700; color: #f8fafc;">{{ s.name }}</td>
-                  <td style="text-align:center;">
-                    <span class="ai-chip chip-complexity" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">
-                      Lv.{{ s.presentationPoint || 1 }}
-                    </span>
-                  </td>
                   <td style="text-align:center;">
                     <span :class="['ai-chip', s.passwordChanged ? 'chip-pass' : 'chip-time']" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">
                       {{ s.passwordChanged ? '변경완료' : '초기비번' }}
@@ -67,8 +67,8 @@
         </div>
       </div>
 
-      <!-- Right: Ordered Cards (1. 학생 등록 -> 2. 좌석 그리드 -> 3. 문제 출처 관리) -->
-      <div class="split-col right-col" style="flex: 1; min-width: 380px;">
+      <!-- Right: Ordered Cards (1:1 Ratio) -->
+      <div class="split-col right-col" style="flex: 1; min-width: 0;">
         <!-- 1. 학생 텍스트(CSV) 붙여넣기 등록 -->
         <div class="card mb-3">
           <div class="card-header">
@@ -250,6 +250,9 @@ const editingStudent = ref({
   presentationPoint: 1
 })
 
+const sortKey = ref<string>('sno')
+const sortOrder = ref<'asc' | 'desc'>('asc')
+
 onMounted(async () => {
   if (!authStore.isAdmin) {
     router.push('/assignment')
@@ -262,13 +265,54 @@ onMounted(async () => {
   ])
 })
 
+function toggleSort(key: string) {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    sortKey.value = key
+    sortOrder.value = (key === 'totalExamScore' || key === 'presentationPoint') ? 'desc' : 'asc'
+  }
+}
+
+function getSortIcon(key: string) {
+  if (sortKey.value !== key) return '↕'
+  return sortOrder.value === 'asc' ? '▲' : '▼'
+}
+
 const filteredStudents = computed(() => {
-  if (!searchQuery.value.trim()) return students.value
-  const q = searchQuery.value.trim().toLowerCase()
-  return students.value.filter(s => 
-    (s.name && s.name.toLowerCase().includes(q)) || 
-    (s.sno && s.sno.toLowerCase().includes(q))
-  )
+  let list = students.value
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase()
+    list = list.filter(s => 
+      (s.name && s.name.toLowerCase().includes(q)) || 
+      (s.sno && s.sno.toLowerCase().includes(q))
+    )
+  }
+
+  return [...list].sort((a, b) => {
+    let valA = a[sortKey.value]
+    let valB = b[sortKey.value]
+
+    if (sortKey.value === 'totalExamScore') {
+      valA = valA != null ? Number(valA) : 0
+      valB = valB != null ? Number(valB) : 0
+    } else if (sortKey.value === 'presentationPoint') {
+      valA = valA != null ? Number(valA) : 1
+      valB = valB != null ? Number(valB) : 1
+    } else if (sortKey.value === 'passwordChanged') {
+      valA = a.passwordChanged ? 1 : 0
+      valB = b.passwordChanged ? 1 : 0
+    } else if (typeof valA === 'string') {
+      valA = valA.toLowerCase()
+      valB = (valB || '').toLowerCase()
+      const cmp = valA.localeCompare(valB, 'ko')
+      return sortOrder.value === 'asc' ? cmp : -cmp
+    }
+
+    if (valA < valB) return sortOrder.value === 'asc' ? -1 : 1
+    if (valA > valB) return sortOrder.value === 'asc' ? 1 : -1
+    return 0
+  })
 })
 
 async function loadStudents() {

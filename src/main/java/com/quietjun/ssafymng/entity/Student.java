@@ -60,6 +60,14 @@ public class Student {
     @Builder.Default
     private boolean passwordChanged = false;
 
+    @Column(length = 50, columnDefinition = "varchar(50) default '여행'")
+    @Builder.Default
+    private String domain = "여행";
+
+    @Column(columnDefinition = "boolean default true")
+    @Builder.Default
+    private boolean cert = true;
+
     public StudentDto toDto() {
         return StudentDto.builder()
                 .sno(sno)
@@ -71,6 +79,8 @@ public class Student {
                 .solved(solved)
                 .escape(escape)
                 .passwordChanged(passwordChanged)
+                .domain(domain != null ? domain : "여행")
+                .cert(cert)
                 .build();
     }
 }

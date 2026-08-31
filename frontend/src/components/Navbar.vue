@@ -4,16 +4,24 @@
       <div class="nav-brand" @click="router.push('/')">
         <span class="brand-icon">⚡</span>
         <span class="brand-title">SSAFY MNG</span>
-        <span class="brand-badge">AI Review</span>
       </div>
 
       <!-- Navigation Tabs (Only shown when authenticated) -->
       <nav v-if="authStore.isAuthenticated" class="nav-tabs">
         <router-link to="/assignment" class="nav-tab" active-class="active">
-          <span class="tab-icon">📝</span> 알고리즘 과제 & AI
+          <span class="tab-icon">📝</span> 알고리즘 문제
         </router-link>
         <router-link v-if="authStore.isAdmin" to="/speaker" class="nav-tab" active-class="active">
           <span class="tab-icon">🎲</span> Today Speaker
+        </router-link>
+        <router-link v-if="authStore.isAdmin" to="/students" class="nav-tab" active-class="active">
+          <span class="tab-icon">👨‍🎓</span> 학생 관리
+        </router-link>
+        <router-link v-if="authStore.isAdmin" to="/pairs" class="nav-tab" active-class="active">
+          <span class="tab-icon">👥</span> 페어 관리
+        </router-link>
+        <router-link v-if="authStore.isAdmin" to="/grades" class="nav-tab" active-class="active">
+          <span class="tab-icon">📊</span> 성적 관리
         </router-link>
         <router-link v-if="authStore.isAdmin" to="/settings" class="nav-tab" active-class="active">
           <span class="tab-icon">⚙️</span> 관리자 설정
@@ -23,10 +31,9 @@
       <!-- User Auth Profile -->
       <div class="nav-auth">
         <div v-if="authStore.isAuthenticated" class="user-info-box">
-          <span :class="['user-role-tag', { admin: authStore.isAdmin }]">
-            {{ authStore.isAdmin ? 'ADMIN' : 'STUDENT' }}
+          <span :class="['user-role-tag', { admin: authStore.isAdmin }]" style="font-size: 0.82rem; padding: 0.25rem 0.6rem;">
+            {{ authStore.isAdmin ? '👑 관리자' : `${authStore.user?.name} (${authStore.user?.sno})` }}
           </span>
-          <span class="user-name-text">{{ authStore.user?.name }} ({{ authStore.user?.sno }})</span>
           <button class="btn btn-sm btn-outline" @click="$emit('open-password-modal')">비밀번호 변경</button>
           <button class="btn btn-sm btn-danger" @click="handleLogout">로그아웃</button>
         </div>

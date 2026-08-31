@@ -163,12 +163,11 @@ body {
 
 .left-col {
     flex: 1;
-    min-width: 320px;
-    max-width: 440px;
+    min-width: 0;
 }
 
 .right-col {
-    flex: 2;
+    flex: 1;
     min-width: 0;
 }
 

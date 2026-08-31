@@ -21,6 +21,10 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Map;
+import com.quietjun.ssafymng.entity.ExamScore;
+import com.quietjun.ssafymng.repository.ExamScoreRepository;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -28,6 +32,7 @@ public class StudentService {
 
     private final StudentRepository studentRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ExamScoreRepository examScoreRepository;
 
     @PostConstruct
     public void initDefaultAdmin() {
@@ -47,18 +52,42 @@ public class StudentService {
 
     @Transactional(readOnly = true)
     public List<StudentDto> getStudentList() {
+        Map<String, Double> scoreSums = examScoreRepository.findAll().stream()
+                .filter(es -> es.getStudent() != null)
+                .collect(Collectors.groupingBy(
+                        es -> es.getStudent().getSno(),
+                        Collectors.summingDouble(ExamScore::getScore)
+                ));
+
         return studentRepository.findByRoleAndEscapeFalse(Role.ROLE_STUDENT)
                 .stream()
-                .map(Student::toDto)
+                .map(s -> {
+                    StudentDto dto = s.toDto();
+                    Double sum = scoreSums.get(s.getSno());
+                    dto.setTotalExamScore(sum != null ? Math.round(sum * 10.0) / 10.0 : 0.0);
+                    return dto;
+                })
                 .sorted()
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<StudentDto> getAllActiveMembers() {
+        Map<String, Double> scoreSums = examScoreRepository.findAll().stream()
+                .filter(es -> es.getStudent() != null)
+                .collect(Collectors.groupingBy(
+                        es -> es.getStudent().getSno(),
+                        Collectors.summingDouble(ExamScore::getScore)
+                ));
+
         return studentRepository.findByEscapeFalseOrderBySrowAscScolAsc()
                 .stream()
-                .map(Student::toDto)
+                .map(s -> {
+                    StudentDto dto = s.toDto();
+                    Double sum = scoreSums.get(s.getSno());
+                    dto.setTotalExamScore(sum != null ? Math.round(sum * 10.0) / 10.0 : 0.0);
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -88,6 +117,8 @@ public class StudentService {
                 .srow(req.getSrow())
                 .scol(req.getScol())
                 .presentationPoint(req.getPresentationPoint() > 0 ? req.getPresentationPoint() : 1)
+                .domain(req.getDomain() != null && !req.getDomain().isBlank() ? req.getDomain().trim() : "여행")
+                .cert(req.getCert() != null ? req.getCert() : true)
                 .passwordChanged(false)
                 .escape(false)
                 .build();
@@ -105,6 +136,8 @@ public class StudentService {
         if (req.getScol() != null) student.setScol(req.getScol());
         if (req.getPresentationPoint() > 0) student.setPresentationPoint(req.getPresentationPoint());
         if (req.getRole() != null) student.setRole(req.getRole());
+        if (req.getDomain() != null && !req.getDomain().isBlank()) student.setDomain(req.getDomain().trim());
+        if (req.getCert() != null) student.setCert(req.getCert());
 
         if (req.getPassword() != null && !req.getPassword().isBlank()) {
             student.setPassword(passwordEncoder.encode(req.getPassword()));

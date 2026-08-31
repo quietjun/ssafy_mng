@@ -20,4 +20,8 @@ public class StudentCreateRequest {
     private Integer scol;
     @Builder.Default
     private int presentationPoint = 1;
+    @Builder.Default
+    private String domain = "여행";
+    @Builder.Default
+    private Boolean cert = true;
 }

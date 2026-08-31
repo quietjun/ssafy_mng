@@ -27,6 +27,11 @@ public class StudentDto implements Comparable<StudentDto> {
     private boolean passwordChanged = false;
     @Builder.Default
     private boolean isCandidate = true;
+    private Double totalExamScore;
+    @Builder.Default
+    private String domain = "여행";
+    @Builder.Default
+    private boolean cert = true;
 
     @Override
     public int compareTo(StudentDto o) {
@@ -48,6 +53,8 @@ public class StudentDto implements Comparable<StudentDto> {
                 .solved(solved)
                 .escape(escape)
                 .passwordChanged(passwordChanged)
+                .domain(domain != null ? domain : "여행")
+                .cert(cert)
                 .build();
     }
 }
