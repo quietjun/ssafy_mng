@@ -58,4 +58,4 @@ jobs:
           cd /home/ubuntu
           mv ssafymng-0.0.1-SNAPSHOT.jar app.jar
           chmod +x run.sh
-          ./run.sh
+          nohup ./run.sh "${{ secrets.GEMINI_API_KEY }}" > /dev/null 2>&1 &

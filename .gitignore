@@ -30,6 +30,8 @@ replay_pid*
 *.pub
 .keys/
 ssh/
+src/main/resources/application-local.properties
+src/main/resources/application-secret.properties
 
 # Node / Frontend
 frontend/node_modules/
