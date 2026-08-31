@@ -179,9 +179,9 @@ interface StudentSeat {
   presentationPoint?: number
 }
 
-const rows = ref(6)
-const cols = ref(5)
-const colGroups = ref<number[]>([2, 3])
+const rows = ref(5)
+const cols = ref(6)
+const colGroups = ref<number[]>([2, 2, 2])
 const students = ref<StudentSeat[]>([])
 const isRotated = ref(false)
 const candidateMap = ref<Record<string, boolean>>({})
@@ -363,8 +363,8 @@ function getSectionLabel(idx: number) {
 async function loadLayout() {
   try {
     const { data } = await api.get<any>('/api/speaker/layout')
-    rows.value = data.rows || 6
-    cols.value = data.cols || 5
+    rows.value = data.rows || 5
+    cols.value = data.cols || 6
     
     if (Array.isArray(data.colGroups) && data.colGroups.length > 0) {
       colGroups.value = data.colGroups
@@ -372,7 +372,7 @@ async function loadLayout() {
       const pattern = (data.colPattern || data.colsPattern).trim()
       colGroups.value = pattern.split(/[,: ]+/).map((p: string) => parseInt(p, 10)).filter((n: number) => !isNaN(n) && n > 0)
     } else {
-      colGroups.value = [2, 3]
+      colGroups.value = [2, 2, 2]
     }
 
     students.value = data.students || []

@@ -138,7 +138,7 @@ class ExamServiceTest {
 
             // then
             assertThat(count).isEqualTo(2);
-            verify(examScoreRepository).save(any(ExamScore.class));
+            verify(examScoreRepository, org.mockito.Mockito.times(2)).save(any(ExamScore.class));
         }
     }
 

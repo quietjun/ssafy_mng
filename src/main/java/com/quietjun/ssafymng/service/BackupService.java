@@ -181,7 +181,8 @@ public class BackupService {
                 "platform_sites",
                 "problems",
                 "submissions",
-                "pair_histories"
+                "pair_histories",
+                "admin_scripts"
             };
 
             for (String table : tables) {

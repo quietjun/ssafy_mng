@@ -32,12 +32,12 @@ public class MetadataController {
     public ResponseEntity<Map<String, Object>> getGridConfig() {
         ConfigMetaDataDto rMeta = metadataService.find("classrow");
         ConfigMetaDataDto pMeta = metadataService.find("classcol_pattern");
-        int rows = 6;
+        int rows = 5;
         if (rMeta != null && rMeta.getValue() != null && !rMeta.getValue().isBlank()) {
             try { rows = Integer.parseInt(rMeta.getValue()); } catch (Exception ignored) {}
         }
         String pattern = (pMeta != null && pMeta.getValue() != null && !pMeta.getValue().isBlank()) 
-                ? pMeta.getValue().trim() : "2,3";
+                ? pMeta.getValue().trim() : "2,2,2";
         return ResponseEntity.ok(Map.of("rows", rows, "colsPattern", pattern));
     }
 

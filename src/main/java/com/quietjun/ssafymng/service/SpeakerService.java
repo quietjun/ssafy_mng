@@ -36,7 +36,7 @@ public class SpeakerService {
                 return Integer.parseInt(rMeta.getValue());
             } catch (Exception ignored) {}
         }
-        return 6;
+        return 5;
     }
 
     public String getColPattern() {
@@ -48,7 +48,7 @@ public class SpeakerService {
         if (cMeta != null && cMeta.getValue() != null && !cMeta.getValue().isBlank()) {
             return cMeta.getValue().trim();
         }
-        return "2,3"; // 기본 2분단 (2열, 3열 = 총 5열)
+        return "2,2,2"; // 기본 3분단 (2열, 2열, 2열 = 총 6열)
     }
 
     public List<Integer> getColGroups() {
@@ -66,23 +66,32 @@ public class SpeakerService {
 
         if (groups.isEmpty()) {
             groups.add(2);
-            groups.add(3);
+            groups.add(2);
+            groups.add(2);
         } else if (groups.size() == 1) {
             int total = groups.get(0);
             groups.clear();
-            if (total == 5) {
+            if (total == 6) {
                 groups.add(2);
-                groups.add(3);
-            } else if (total == 6) {
-                groups.add(3);
+                groups.add(2);
+                groups.add(2);
+            } else if (total == 5) {
+                groups.add(2);
                 groups.add(3);
             } else if (total == 4) {
                 groups.add(2);
                 groups.add(2);
             } else {
-                int half = total / 2;
-                groups.add(half);
-                groups.add(total - half);
+                int part = total / 3;
+                if (part > 0) {
+                    groups.add(part);
+                    groups.add(part);
+                    groups.add(total - (part * 2));
+                } else {
+                    int half = total / 2;
+                    groups.add(half);
+                    groups.add(total - half);
+                }
             }
         }
         return groups;
