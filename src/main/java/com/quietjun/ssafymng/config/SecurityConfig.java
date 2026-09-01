@@ -33,6 +33,7 @@ public class SecurityConfig {
                     "/assignment",
                     "/speaker",
                     "/settings",
+                    "/lectures",
                     "/assets/**",
                     "/css/**",
                     "/js/**",
@@ -48,7 +49,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/problems/**", "/api/problems", "/api/platforms/**", "/api/platforms").permitAll()
                 .requestMatchers("/api/platforms/**", "/api/platforms").hasAuthority("ROLE_ADMIN")
-                .requestMatchers("/api/students/**", "/api/metadata/**", "/api/backup/**", "/api/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/students/**", "/api/metadata/**", "/api/backup/**", "/api/admin/**", "/api/lectures/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/problems").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/api/problems/**").hasAuthority("ROLE_ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/problems/**").hasAuthority("ROLE_ADMIN")

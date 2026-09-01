@@ -23,6 +23,9 @@
         <router-link v-if="authStore.isAdmin" to="/grades" class="nav-tab" active-class="active">
           <span class="tab-icon">📊</span> 성적 관리
         </router-link>
+        <router-link v-if="authStore.isAdmin" to="/lectures" class="nav-tab" active-class="active">
+          <span class="tab-icon">📺</span> 라이브 강의 집계
+        </router-link>
         <router-link v-if="authStore.isAdmin" to="/settings" class="nav-tab" active-class="active">
           <span class="tab-icon">⚙️</span> 관리자 설정
         </router-link>

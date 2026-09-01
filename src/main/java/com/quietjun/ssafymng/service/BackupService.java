@@ -272,7 +272,6 @@ public class BackupService {
         String os = System.getProperty("os.name");
         return os != null && os.toLowerCase().contains("win");
     }
-}
 
     private String extractHostFromUrl(String url, String defaultHost) {
         try {

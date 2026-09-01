@@ -125,10 +125,10 @@ trs.forEach(function(tr){
         let loginid = tds[3].querySelector("a").innerHTML;
         loginid = loginid.substr(0, loginid.indexOf("@"));
         let score = tds[11].innerHTML;
-        tscript+=`${sno.innerHTML}\\t${name}\\t${loginid}\\t${score}\\n` 
-        total+=`("${sno.innerHTML}","${name}","${loginid}","${score}",""),\\n`;
+        tscript += sno.innerHTML + "\\t" + name + "\\t" + loginid + "\\t" + score + "\\n";
+        total += '("' + sno.innerHTML + '","' + name + '","' + loginid + '","' + score + '",""),\\n';
     }
-})
+});
 console.log(tscript);
 console.log(total);
 """.trim())
@@ -145,15 +145,15 @@ let tscript = "";
 let trs = document.querySelectorAll("#gridList > tbody > tr");
 trs.forEach(function(tr){
     let tds = tr.querySelectorAll("td");
-    let sno = tds[4].innerHTML
-    console.log(sno)
+    let sno = tds[4].innerHTML;
+    console.log(sno);
     if(sno){
         let name = tds[3].querySelector("a").innerHTML;
         let score = tds[13].innerHTML;
-        tscript+=`${sno}\\t${name}\\t${score}\\n` 
-        total+=`("${sno}","${name}","${score}",""),\\n`;
+        tscript += sno + "\\t" + name + "\\t" + score + "\\n";
+        total += '("' + sno + '","' + name + '","' + score + '",""),\\n';
     }
-})
+});
 console.log(tscript);
 console.log(total);
 """.trim())
