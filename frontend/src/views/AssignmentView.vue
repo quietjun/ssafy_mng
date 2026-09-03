@@ -871,12 +871,11 @@ const cleanDescription = computed(() => {
 function formatShortDateTime(dtStr?: string) {
   if (!dtStr) return '-'
   const clean = dtStr.replace('T', ' ')
-  // "2026-08-30 22:15:30" -> "08-30 22:15"
+  // "2026-08-30 22:15:30" -> "22:15"
   if (clean.length >= 10 && clean.includes('-')) {
     const parts = clean.split(' ')
-    const datePart = parts[0].substring(parts[0].indexOf('-') + 1) // "08-30"
     const timePart = parts[1] ? parts[1].substring(0, 5) : '' // "22:15"
-    return timePart ? `${datePart} ${timePart}` : datePart
+    return timePart || clean
   }
   return clean
 }

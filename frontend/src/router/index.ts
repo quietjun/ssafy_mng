@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { pinia } from '@/stores'
 import LoginView from '@/views/LoginView.vue'
 import AssignmentView from '@/views/AssignmentView.vue'
 import SpeakerView from '@/views/SpeakerView.vue'
@@ -27,7 +28,7 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  const authStore = useAuthStore()
+  const authStore = useAuthStore(pinia)
   if (!authStore.isChecked) {
     await authStore.checkAuth()
   }

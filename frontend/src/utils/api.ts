@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useLoadingStore } from '@/stores/loading'
+import { pinia } from '@/stores'
 
 const api = axios.create({
   timeout: 60000,
@@ -10,13 +11,13 @@ api.interceptors.request.use(
   (config) => {
     // 특정 요청에서 로딩 스피너를 제외하고 싶은 경우 config.headers['X-Skip-Loading'] = 'true' 처리 가능
     if (!config.headers?.['X-Skip-Loading']) {
-      const loadingStore = useLoadingStore()
+      const loadingStore = useLoadingStore(pinia)
       loadingStore.startLoading()
     }
     return config
   },
   (error) => {
-    const loadingStore = useLoadingStore()
+    const loadingStore = useLoadingStore(pinia)
     loadingStore.stopLoading()
     return Promise.reject(error)
   }
@@ -26,14 +27,14 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     if (!response.config.headers?.['X-Skip-Loading']) {
-      const loadingStore = useLoadingStore()
+      const loadingStore = useLoadingStore(pinia)
       loadingStore.stopLoading()
     }
     return response
   },
   (error) => {
     if (!error.config?.headers?.['X-Skip-Loading']) {
-      const loadingStore = useLoadingStore()
+      const loadingStore = useLoadingStore(pinia)
       loadingStore.stopLoading()
     }
     return Promise.reject(error)
