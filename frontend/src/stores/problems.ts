@@ -86,6 +86,27 @@ export const useProblemStore = defineStore('problems', () => {
     }
   }
 
+  async function loadAllProblems() {
+    isLoading.value = true
+    try {
+      const { data } = await api.get<ProblemItem[]>('/api/problems/all')
+      problems.value = Array.isArray(data) ? data : []
+      if (problems.value.length > 0) {
+        if (!selectedProblem.value || !problems.value.some(p => p.id === selectedProblem.value?.id)) {
+          selectedProblem.value = problems.value[0]
+        }
+      } else {
+        selectedProblem.value = null
+      }
+    } catch (e) {
+      console.error('Failed to load all problems:', e)
+      problems.value = []
+      selectedProblem.value = null
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   function selectProblem(p: ProblemItem | null) {
     selectedProblem.value = p
   }
@@ -98,6 +119,7 @@ export const useProblemStore = defineStore('problems', () => {
     loadPlatforms,
     loadWeeklyProblems,
     loadDailyProblems,
+    loadAllProblems,
     selectProblem
   }
 })
