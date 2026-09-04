@@ -32,8 +32,8 @@ public class LiveLectureController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<LiveLectureSummaryResponse> getSummary() {
-        return ResponseEntity.ok(lectureService.getSummary());
+    public ResponseEntity<LiveLectureSummaryResponse> getSummary(@org.springframework.web.bind.annotation.RequestParam(value = "term", required = false) String term) {
+        return ResponseEntity.ok(lectureService.getSummary(term));
     }
 
     @PostMapping("/bulk")

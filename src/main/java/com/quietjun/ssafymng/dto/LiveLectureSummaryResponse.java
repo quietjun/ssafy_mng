@@ -21,6 +21,8 @@ public class LiveLectureSummaryResponse {
     private LocalDate minLectureDate;
     private LocalDate maxLectureDate; // 언제까지 처리되었는지 (최신 강의 날짜)
     private LocalDateTime lastProcessedAt; // 데이터가 집계/처리된 시각
+    private List<String> availableTerms; // 학기 선택 옵션 목록 (e.g. ["1학기", "2학기"])
+    private String selectedTerm; // 현재 선택/집계된 학기 필터
     private List<TrackSummaryDto> trackSummaries;
     private Map<String, Long> instructorCounts;
     private Map<String, Long> locationCounts;

@@ -479,16 +479,16 @@
             <button class="btn btn-sm btn-outline" @click="loadPeerSubmissions">🔄 새로고침</button>
           </div>
 
-          <div class="table-responsive mt-2">
-            <table class="data-table peer-table" style="table-layout: fixed; width: 100%;">
+          <div class="peer-table-wrapper mt-2">
+            <table class="data-table peer-table">
               <thead>
                 <tr>
                   <th @click="sortBy('studentName')" class="sortable-th" style="width: 25%;">제출자 ↕</th>
-                  <th @click="sortBy('submittedAt')" class="sortable-th" style="width: 20%;">제출시각 ↕</th>
-                  <th @click="sortBy('executionTime')" class="sortable-th" style="width: 17%; text-align:center;">실행시간(ms) ↕</th>
-                  <th @click="sortBy('memoryUsage')" class="sortable-th" style="width: 17%; text-align:center;">메모리(KB) ↕</th>
-                  <th @click="sortBy('codeLength')" class="sortable-th" style="width: 11%; text-align:center;">길이(B) ↕</th>
-                  <th style="width: 10%; text-align:center;">더보기</th>
+                  <th @click="sortBy('submittedAt')" class="sortable-th" style="width: 15%; text-align:center;">제출시각 ↕</th>
+                  <th @click="sortBy('executionTime')" class="sortable-th" style="width: 16%; text-align:center;">실행시간(ms) ↕</th>
+                  <th @click="sortBy('memoryUsage')" class="sortable-th" style="width: 16%; text-align:center;">메모리(KB) ↕</th>
+                  <th @click="sortBy('codeLength')" class="sortable-th" style="width: 14%; text-align:center;">길이(B) ↕</th>
+                  <th style="width: 14%; text-align:center;">상세/코드</th>
                 </tr>
               </thead>
               <tbody>
@@ -497,11 +497,14 @@
                 </tr>
                 <template v-for="s in sortedSubmissions" :key="s.id">
                   <tr :class="{ 'row-expanded': expandedSubmissionId === s.id }">
-                    <td><strong>{{ s.studentName }}</strong> ({{ s.studentSno || s.sno }})</td>
-                    <td style="color:#94a3b8; font-size:0.82rem;">{{ formatShortDateTime(s.submittedAt) }}</td>
-                    <td style="text-align:center;"><span class="ai-chip chip-time" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">{{ stripUnit(s.executionTime) }}</span></td>
-                    <td style="text-align:center;"><span class="ai-chip chip-mem" style="padding: 0.15rem 0.45rem; font-size: 0.75rem;">{{ stripUnit(s.memoryUsage) }}</span></td>
-                    <td style="text-align:center; font-size:0.82rem;">{{ stripUnit(s.codeLength) }}</td>
+                    <td style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                      <strong style="color:#f8fafc; font-size:0.9rem;">{{ s.studentName }}</strong>
+                      <span style="color:#94a3b8; font-size:0.78rem; margin-left:3px;">({{ s.studentSno || s.sno }})</span>
+                    </td>
+                    <td style="color:#94a3b8; font-size:0.82rem; text-align:center;">{{ formatShortDateTime(s.submittedAt) }}</td>
+                    <td style="text-align:center;"><span class="ai-chip chip-time" style="padding: 0.15rem 0.5rem; font-size: 0.78rem; font-weight:700;">{{ stripUnit(s.executionTime) }}</span></td>
+                    <td style="text-align:center;"><span class="ai-chip chip-mem" style="padding: 0.15rem 0.5rem; font-size: 0.78rem; font-weight:700;">{{ stripUnit(s.memoryUsage) }}</span></td>
+                    <td style="text-align:center; font-size:0.82rem; color:#cbd5e1;">{{ stripUnit(s.codeLength) }}</td>
                     <td style="text-align:center;">
                       <button 
                         class="btn btn-sm"
@@ -1160,3 +1163,83 @@ function copyCode() {
   }
 }
 </script>
+
+<style scoped>
+.assignment-page {
+  width: 100%;
+}
+
+/* 1:2 Column Ratio (Left: Problem List ~33% / Right: Detail & Submissions ~67%) */
+.assignment-page .content-split {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.assignment-page .left-col {
+  flex: 1 1 0% !important;
+  min-width: 320px;
+}
+
+.assignment-page .right-col {
+  flex: 2 1 0% !important;
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .assignment-page .content-split {
+    flex-direction: column;
+  }
+  .assignment-page .left-col,
+  .assignment-page .right-col {
+    max-width: 100% !important;
+    width: 100% !important;
+    flex: 1 1 100% !important;
+  }
+}
+
+/* Student Peer Submissions Table Styling */
+.peer-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.peer-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.88rem;
+}
+
+.peer-table th {
+  padding: 0.75rem 0.65rem;
+  background: rgba(0, 0, 0, 0.35);
+  color: #94a3b8;
+  font-weight: 700;
+  font-size: 0.82rem;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.peer-table td {
+  padding: 0.75rem 0.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.peer-table tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.peer-table tr.row-expanded td {
+  background: rgba(99, 102, 241, 0.08);
+  border-bottom-color: transparent;
+}
+</style>

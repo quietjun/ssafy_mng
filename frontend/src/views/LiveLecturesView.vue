@@ -1,24 +1,41 @@
 <template>
   <div class="lectures-page">
     <!-- Top Header -->
-    <div class="page-header mb-4">
+    <div class="page-header mb-3">
       <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem;">
         <div>
           <h2 style="font-size: 1.4rem; font-weight: 800; color: #f8fafc; margin-bottom: 0.35rem; display:flex; align-items:center; gap:0.5rem;">
-            <span>📺 라이브 강의 트랙별 집계 & 수집 기간 달력</span>
+            <span>📺 라이브 강의 트랙별 횟수 집계 & 수집일자 달력</span>
             <span class="badge info" style="font-weight: 600;">관리자 모드</span>
           </h2>
           <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">
-            전체 일정의 트랙별 총 수강 시간 및 수집된 시작일~종료일 범위 상태를 직관적으로 확인합니다.
+            매일 공개되는 수집 데이터를 등록하여 한 학기 동안 트랙별 총 진행 강의 횟수(회수) 및 날짜별 수집 완료 상태를 확인합니다.
           </p>
         </div>
 
-        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
-          <button class="btn btn-primary" @click="isPasteModalOpen = true" style="display:flex; align-items:center; gap:0.4rem;">
-            <span>📋</span> 데이터 붙여넣기 및 집계
-          </button>
-          <button class="btn btn-outline" @click="handleFillSampleData" style="display:flex; align-items:center; gap:0.4rem;">
-            <span>⚡</span> 예시 데이터 즉시 채우기
+        <div style="display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap;">
+          <!-- Term Filter Select -->
+          <div v-if="summary?.availableTerms && summary.availableTerms.length > 0" style="display:flex; align-items:center; gap:0.4rem;">
+            <label style="font-size:0.82rem; color:#94a3b8; font-weight:600;">🎓 학기 선택:</label>
+            <select 
+              v-model="selectedTerm" 
+              @change="handleTermChange"
+              style="background: rgba(30, 41, 59, 0.8); color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); padding: 0.35rem 0.6rem; border-radius: 6px; font-size: 0.82rem; cursor: pointer;"
+            >
+              <option value="">전체 학기</option>
+              <option v-for="termOption in summary.availableTerms" :key="termOption" :value="termOption">
+                {{ termOption }}
+              </option>
+            </select>
+          </div>
+
+          <button 
+            class="btn" 
+            :class="isPastePanelOpen ? 'btn-primary' : 'btn-primary'"
+            @click="isPastePanelOpen = !isPastePanelOpen" 
+            style="display:flex; align-items:center; gap:0.4rem;"
+          >
+            <span>📋</span> 데이터 붙여넣기 {{ isPastePanelOpen ? '창 닫기' : '및 집계' }}
           </button>
           <button v-if="summary && summary.totalLectures > 0" class="btn btn-danger-outline" @click="handleClearData">
             🗑️ 전체 초기화
@@ -27,14 +44,110 @@
       </div>
     </div>
 
+    <!-- Inline Top Data Paste Card (페이지 상단 즉시 붙여넣기 영역) -->
+    <div 
+      v-if="isPastePanelOpen || (summary && summary.totalLectures === 0)" 
+      class="card mb-4" 
+      style="border: 2px solid rgba(99, 102, 241, 0.5); background: rgba(19, 27, 46, 0.95); box-shadow: 0 10px 25px rgba(0,0,0,0.5);"
+    >
+      <div class="card-header" style="padding-bottom: 0.6rem; margin-bottom: 0.8rem;">
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <h3 style="font-size: 1.1rem; font-weight: 800; color: #a5b4fc; margin: 0; display:flex; align-items:center; gap:0.4rem;">
+            <span>📋 상단 데이터 붙여넣기 & 실시간 집계</span>
+          </h3>
+          <span class="badge info" style="font-size:0.72rem;">스크롤 없이 상단에서 즉시 처리</span>
+        </div>
+        <button v-if="summary && summary.totalLectures > 0" class="btn btn-sm btn-outline" @click="isPastePanelOpen = false">&times; 접기</button>
+      </div>
+
+      <div style="background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.3); padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.8rem; color: #93c5fd; margin-bottom: 0.8rem; line-height: 1.4;">
+        💡 <strong>수시 누적 수집 안내:</strong> 동일한 날짜라도 Java 트랙, Python 트랙 등 매일 공개되는 데이터를 상단 상자에 복사 후 <code>기존 데이터에 추가</code> 상태로 파싱을 실행하면 스크롤 없이 누적 집계됩니다.
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.4rem;">
+        <label class="form-label" style="margin: 0; font-size: 0.82rem; font-weight: 700; color: #cbd5e1;">
+          붙여넣을 데이터 (복사된 텍스트):
+        </label>
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <span style="font-size:0.78rem; color:#94a3b8;">감지된 줄 수: <strong style="color:#f8fafc;">{{ previewLineCount }}줄</strong></span>
+        </div>
+      </div>
+
+      <textarea 
+        v-model="pasteText"
+        class="form-input mb-3" 
+        rows="6" 
+        placeholder="구분	장소	주제	내용	강사명	날짜	요일	방영시간	종료시간	길이
+1학기	구미	코딩 Live강의 Mobile 트랙	WEB : HTML5	허태식 강사	2026-07-20	월	9:00	11:00	2:00
+1학기	온택트룸4(17층)	코딩 Live강의 Java 전공 트랙	Java : 기본문법	조용준 강사	2026-07-21	화	9:00	11:00	2:00..."
+        style="font-family: monospace; font-size: 0.82rem; line-height: 1.4; resize: vertical; background: rgba(11, 15, 25, 0.9);"
+      ></textarea>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+        <div style="display:flex; gap: 1.2rem; align-items:center; font-size: 0.82rem;">
+          <label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer; color:#e2e8f0; font-weight:600;">
+            <input type="radio" :value="true" v-model="appendMode" />
+            <span>기존 데이터에 추가 (누적 수집)</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer; color:#e2e8f0;">
+            <input type="radio" :value="false" v-model="appendMode" />
+            <span>기존 데이터 덮어쓰기</span>
+          </label>
+        </div>
+
+        <div style="display:flex; gap:0.5rem;">
+          <button 
+            class="btn btn-primary" 
+            @click="handleProcessBulkText"
+            :disabled="isProcessing || !pasteText.trim()"
+            style="padding: 0.55rem 1.25rem; font-weight: 800; font-size: 0.92rem;"
+          >
+            {{ isProcessing ? '파싱 및 집계 중...' : '🚀 상단에서 파싱 및 집계 즉시 실행' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Status Overview Stat Cards -->
-    <div class="stats-grid mb-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
-      <!-- 1. 수집 강의 기간 범위 (minDate ~ maxDate) -->
+    <div class="stats-grid mb-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+      <!-- 1. 총 진행 강의 횟수 (최우선 주요 지표) -->
+      <div class="card stat-card" style="border: 1px solid rgba(16, 185, 129, 0.5); background: rgba(16, 185, 129, 0.08);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-size: 0.82rem; color: #6ee7b7; font-weight: 700; margin-bottom: 0.3rem;">🎯 총 진행 강의 횟수</div>
+            <div style="font-size: 1.65rem; font-weight: 800; color: #34d399;">
+              총 {{ summary?.totalLectures || 0 }}회
+            </div>
+          </div>
+          <span style="font-size: 1.8rem; opacity: 0.9;">📚</span>
+        </div>
+        <div style="font-size: 0.78rem; color: #a7f3d0; margin-top: 0.5rem;">
+          {{ selectedTerm ? `${selectedTerm} 기준 집계 완료` : '전체 수집 기간 집계 중' }}
+        </div>
+      </div>
+
+      <!-- 2. 개설 트랙 수 -->
+      <div class="card stat-card" style="border: 1px solid rgba(245, 158, 11, 0.4); background: rgba(30, 41, 59, 0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.3rem;">🎓 개설 트랙 수</div>
+            <div style="font-size: 1.45rem; font-weight: 800; color: #fbbf24;">
+              {{ summary?.totalTracks || 0 }}개 트랙
+            </div>
+          </div>
+          <span style="font-size: 1.8rem; opacity: 0.8;">🚀</span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
+          강사 {{ Object.keys(summary?.instructorCounts || {}).length }}명 참여
+        </div>
+      </div>
+
+      <!-- 3. 수집 강의 기간 범위 (minDate ~ maxDate) -->
       <div class="card stat-card" style="border: 1px solid rgba(59, 130, 246, 0.4); background: rgba(30, 41, 59, 0.4);">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
             <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.3rem;">📅 수집 강의 기간 범위</div>
-            <div style="font-size: 1.25rem; font-weight: 800; color: #60a5fa; word-break: break-all;">
+            <div style="font-size: 1.1rem; font-weight: 800; color: #60a5fa; word-break: break-all;">
               <template v-if="summary?.minLectureDate && summary?.maxLectureDate">
                 <span v-if="summary.minLectureDate === summary.maxLectureDate">{{ summary.minLectureDate }}</span>
                 <span v-else>{{ summary.minLectureDate }} ~ {{ summary.maxLectureDate }}</span>
@@ -45,96 +158,64 @@
           <span style="font-size: 1.8rem; opacity: 0.8;">📆</span>
         </div>
         <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
-          {{ summary?.minLectureDate ? `총 ${Object.keys(dateLectureMap).length}일간 수집 등록됨` : '등록된 수집 기간이 없습니다.' }}
+          {{ summary?.minLectureDate ? `총 ${Object.keys(dateLectureMap).length}일간 수집 완료` : '등록된 수집 기간이 없습니다.' }}
         </div>
       </div>
 
-      <!-- 2. 전체 일정 총 수강 시간 (Total Duration Hours) -->
-      <div class="card stat-card" style="border: 1px solid rgba(16, 185, 129, 0.4); background: rgba(30, 41, 59, 0.4);">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div>
-            <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.3rem;">⏱️ 전체 일정 총 수강 시간</div>
-            <div style="font-size: 1.45rem; font-weight: 800; color: #34d399;">
-              {{ summary?.totalHours || 0 }}시간
-            </div>
-          </div>
-          <span style="font-size: 1.8rem; opacity: 0.8;">⏳</span>
-        </div>
-        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
-          총 {{ summary?.totalLectures || 0 }}개 강의 세션 진행
-        </div>
-      </div>
-
-      <!-- 3. 개설 트랙 수 -->
-      <div class="card stat-card" style="border: 1px solid rgba(245, 158, 11, 0.4); background: rgba(30, 41, 59, 0.4);">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div>
-            <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.3rem;">🎯 개설 트랙 수</div>
-            <div style="font-size: 1.45rem; font-weight: 800; color: #fbbf24;">
-              {{ summary?.totalTracks || 0 }}개 트랙
-            </div>
-          </div>
-          <span style="font-size: 1.8rem; opacity: 0.8;">🎓</span>
-        </div>
-        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
-          강사 {{ Object.keys(summary?.instructorCounts || {}).length }}명 참여
-        </div>
-      </div>
-
-      <!-- 4. 마지막 집계 처리 일시 (lastProcessedAt) -->
+      <!-- 4. 전체 일정 총 수강 시간 & 처리 일시 -->
       <div class="card stat-card" style="border: 1px solid rgba(168, 85, 247, 0.4); background: rgba(30, 41, 59, 0.4);">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.3rem;">⏱️ 마지막 데이터 처리 일시</div>
-            <div style="font-size: 1.15rem; font-weight: 800; color: #c084fc;">
-              {{ formatTimestamp(summary?.lastProcessedAt) }}
+            <div style="font-size: 0.82rem; color: #94a3b8; font-weight: 600; margin-bottom: 0.3rem;">⏱️ 전체 수강 시간 & 수집시각</div>
+            <div style="font-size: 1.3rem; font-weight: 800; color: #c084fc;">
+              {{ summary?.totalHours || 0 }}시간
             </div>
           </div>
           <span style="font-size: 1.8rem; opacity: 0.8;">🕒</span>
         </div>
         <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.5rem;">
-          {{ summary?.lastProcessedAt ? '최신 파싱 집계 상태 유지 중' : '집계 이력 없음' }}
+          마지막 집계: {{ formatTimestamp(summary?.lastProcessedAt) }}
         </div>
       </div>
     </div>
 
     <!-- Main Content Grid -->
-    <div class="content-split" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(430px, 1fr)); gap: 1.5rem; align-items: start;">
+    <div class="content-split" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem; align-items: start;">
       
-      <!-- Left Column: Track-by-Track Lecture Hours & Statistics Panel (트랙별 수강 시간 강조) -->
+      <!-- Left Column: Track-by-Track Lecture Count Statistics Panel (트랙별 횟수 집계 강조) -->
       <div class="card">
         <div class="card-header" style="flex-wrap:wrap; gap:0.5rem;">
           <div style="display:flex; align-items:center; gap:0.5rem;">
-            <h3 style="font-size: 1.15rem; font-weight: 700; color: #f8fafc; margin: 0;">⏱️ 전체 일정 트랙별 강의 시간</h3>
-            <span class="badge info">{{ summary?.trackSummaries?.length || 0 }}개</span>
+            <h3 style="font-size: 1.15rem; font-weight: 700; color: #f8fafc; margin: 0;">🎯 트랙별 강의 진행 횟수 (회수)</h3>
+            <span class="badge info">{{ summary?.trackSummaries?.length || 0 }}개 트랙</span>
           </div>
 
           <!-- Sort View Mode toggle -->
           <div style="display:flex; gap:0.4rem; background:rgba(0,0,0,0.3); padding:0.2rem; border-radius:6px;">
             <button 
-              :class="['btn', 'btn-xs', sortMode === 'hours' ? 'btn-primary' : 'btn-outline']"
-              style="padding:0.15rem 0.5rem; font-size:0.75rem;"
-              @click="sortMode = 'hours'"
-            >
-              시간순
-            </button>
-            <button 
               :class="['btn', 'btn-xs', sortMode === 'count' ? 'btn-primary' : 'btn-outline']"
-              style="padding:0.15rem 0.5rem; font-size:0.75rem;"
+              style="padding:0.15rem 0.55rem; font-size:0.75rem;"
               @click="sortMode = 'count'"
             >
               횟수순
             </button>
+            <button 
+              :class="['btn', 'btn-xs', sortMode === 'hours' ? 'btn-primary' : 'btn-outline']"
+              style="padding:0.15rem 0.55rem; font-size:0.75rem;"
+              @click="sortMode = 'hours'"
+            >
+              시간순
+            </button>
           </div>
         </div>
         <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-          전체 일정 동안 각 트랙이 차지하는 **총 수강 시간(시간)** 및 전체 대비 시간 비중(%)입니다.
+          한 학기 동안 각 트랙별로 진행된 **총 강의 회수(N회)** 및 전체 강의 중 비중(%)입니다.
         </p>
 
         <div v-if="!summary || summary.trackSummaries.length === 0" class="empty-state" style="padding: 3rem 1rem; text-align: center;">
           <span style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem;">📝</span>
-          <p style="color: var(--text-muted); font-size: 0.9rem;">등록된 강의 데이터가 없습니다.</p>
-          <button class="btn btn-sm btn-primary mt-2" @click="isPasteModalOpen = true">데이터 붙여넣기</button>
+          <p style="color: var(--text-muted); font-size: 0.9rem;">등록된 라이브 강의 데이터가 없습니다.</p>
+          <button class="btn btn-sm btn-primary mt-2" @click="isPastePanelOpen = true">데이터 붙여넣기</button>
         </div>
 
         <div v-else class="track-list" style="display:flex; flex-direction:column; gap: 0.95rem;">
@@ -149,21 +230,21 @@
                 <span class="track-tag" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700;">
                   트랙
                 </span>
-                <strong style="font-size: 0.95rem; color: #f8fafc;">{{ t.trackName }}</strong>
+                <strong style="font-size: 1.02rem; color: #f8fafc;">{{ t.trackName }}</strong>
               </div>
               
-              <!-- Total Hours Highlighted -->
+              <!-- Total Lecture Count Highlighted -->
               <div style="text-align:right;">
-                <span style="font-size: 1.15rem; font-weight: 800; color: #34d399;">총 {{ t.totalHours }}시간</span>
-                <span style="font-size: 0.78rem; color: #94a3b8; margin-left: 0.3rem;">({{ t.hoursPercentage || t.percentage }}%)</span>
+                <span style="font-size: 1.25rem; font-weight: 800; color: #34d399;">총 {{ t.lectureCount }}회</span>
+                <span style="font-size: 0.82rem; color: #94a3b8; margin-left: 0.35rem; font-weight:600;">({{ t.percentage }}%)</span>
               </div>
             </div>
 
-            <!-- Progress Bar based on Total Hours -->
-            <div class="progress-bar-bg" style="width: 100%; height: 9px; background: rgba(255, 255, 255, 0.1); border-radius: 5px; overflow: hidden; margin-bottom: 0.55rem;">
+            <!-- Progress Bar based on Lecture Count Percentage -->
+            <div class="progress-bar-bg" style="width: 100%; height: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 5px; overflow: hidden; margin-bottom: 0.6rem;">
               <div 
                 class="progress-bar-fill"
-                :style="{ width: `${t.hoursPercentage || t.percentage}%`, background: getTrackColor(t.trackName) }"
+                :style="{ width: `${t.percentage}%`, background: getTrackColor(t.trackName) }"
                 style="height: 100%; transition: width 0.3s ease;"
               ></div>
             </div>
@@ -177,7 +258,7 @@
                 </span>
               </div>
               <div style="display:flex; gap:0.6rem; align-items:center;">
-                <span>📚 총 {{ t.lectureCount }}회 강의</span>
+                <span>⏱️ {{ t.totalHours }}시간 ({{ t.hoursPercentage }}%)</span>
                 <span>📍 {{ t.locations.join(', ') || '미지정' }}</span>
               </div>
             </div>
@@ -185,14 +266,14 @@
         </div>
       </div>
 
-      <!-- Right Column: Date Collection Calendar (날짜별 수집 현황 달력) -->
-      <div style="display:flex; flex-direction:column; gap:1.5rem;">
+      <!-- Right Column: Date Collection Calendar (날짜별 수집 완료 여부 표시 달력) -->
+      <div style="display:flex; flex-direction:column; gap:1.5rem; min-width: 0;">
         
         <!-- Calendar Card -->
-        <div class="card" style="border: 1px solid rgba(59, 130, 246, 0.3);">
+        <div class="card" style="border: 1px solid rgba(59, 130, 246, 0.3); overflow: hidden;">
           <div class="card-header" style="flex-wrap:wrap; gap:0.5rem;">
             <div style="display:flex; align-items:center; gap:0.5rem;">
-              <h3 style="font-size: 1.15rem; font-weight: 700; color: #f8fafc; margin: 0;">📅 수집 일자 달력 확인</h3>
+              <h3 style="font-size: 1.15rem; font-weight: 700; color: #f8fafc; margin: 0;">📅 수집일자 달력 (수집 완료 여부)</h3>
               <span class="badge success">
                 {{ Object.keys(dateLectureMap).length }}일간 수집 완료
               </span>
@@ -223,7 +304,7 @@
           </div>
 
           <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 0.8rem;">
-            초록색 뱃지가 표시된 날짜가 정보가 수집되어 저장된 날짜입니다. (날짜 클릭 시 당일 강의 확인)
+            초록색 뱃지(**✅ 수집 완료**)가 표시된 날짜가 데이터 수집이 완료된 날짜입니다. (날짜 클릭 시 당일 상세 내역)
           </p>
 
           <!-- Calendar View Component -->
@@ -245,17 +326,28 @@
                   { 
                     'empty-cell': !cell.dateStr,
                     'has-data': cell.lectures.length > 0,
-                    'is-selected': selectedDate === cell.dateStr,
+                    'is-selected': !!selectedDate && selectedDate === cell.dateStr,
                     'is-weekend': cell.dayOfWeekNum === 0 || cell.dayOfWeekNum === 6
                   }
                 ]"
                 @click="cell.dateStr && selectCalendarDate(cell.dateStr)"
               >
                 <div v-if="cell.dateStr" class="cell-content">
-                  <span class="day-number">{{ cell.dayNum }}</span>
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="day-number">{{ cell.dayNum }}</span>
+                    <span v-if="cell.lectures.length > 0" style="font-size:0.65rem; color:#34d399; font-weight:800;">
+                      완료
+                    </span>
+                  </div>
+
                   <div v-if="cell.lectures.length > 0" class="badge-container">
-                    <span class="collected-badge">
-                      ✅ {{ cell.lectures.length }}건
+                    <span class="collected-badge" :title="getTracksTooltip(cell.lectures)">
+                      ✅ {{ cell.lectures.length }}건 수집
+                    </span>
+                  </div>
+                  <div v-else class="badge-container">
+                    <span class="uncollected-badge">
+                      미수집
                     </span>
                   </div>
                 </div>
@@ -263,33 +355,33 @@
             </div>
 
             <!-- Legend -->
-            <div style="display:flex; gap:1.2rem; align-items:center; justify-content:center; margin-top: 1rem; font-size: 0.78rem; color: var(--text-muted);">
-              <div style="display:flex; align-items:center; gap: 0.3rem;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
-                <span>수집 완료 날짜</span>
+            <div style="display:flex; gap:1.5rem; align-items:center; justify-content:center; margin-top: 1rem; font-size: 0.78rem; color: #94a3b8;">
+              <div style="display:flex; align-items:center; gap: 0.4rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(16, 185, 129, 0.3); border: 1px solid #10b981; display: inline-block;"></span>
+                <span style="color:#6ee7b7; font-weight:600;">✅ 수집 완료 날짜</span>
               </div>
-              <div style="display:flex; align-items:center; gap: 0.3rem;">
-                <span style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, 0.15); display: inline-block;"></span>
-                <span>수집 미진행 날짜</span>
+              <div style="display:flex; align-items:center; gap: 0.4rem;">
+                <span style="width: 12px; height: 12px; border-radius: 3px; background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.15); display: inline-block;"></span>
+                <span>미수집 날짜</span>
               </div>
             </div>
           </div>
         </div>
 
         <!-- Selected Date Lecture Summary Details Card -->
-        <div v-if="selectedDate" class="card" style="border: 1px solid rgba(16, 185, 129, 0.4); background: rgba(30, 41, 59, 0.5);">
+        <div v-if="selectedDate" class="card" style="border: 1px solid rgba(16, 185, 129, 0.5); background: rgba(30, 41, 59, 0.6);">
           <div class="card-header mb-2" style="justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:0.5rem;">
               <h4 style="font-size: 1.05rem; font-weight: 700; color: #34d399; margin: 0;">
-                📅 {{ selectedDate }} 수집 내역
+                📅 {{ selectedDate }} 수집 완료 내역
               </h4>
-              <span class="badge info">{{ selectedDateLectures.length }}건</span>
+              <span class="badge success">✅ {{ selectedDateLectures.length }}건 수집됨</span>
             </div>
             <button class="btn btn-sm btn-outline" style="padding: 0.1rem 0.4rem; font-size: 0.75rem;" @click="selectedDate = null">&times; 닫기</button>
           </div>
 
           <div v-if="selectedDateLectures.length === 0" style="font-size:0.85rem; color:var(--text-muted); padding: 1rem 0; text-align:center;">
-            해당 날짜에 수집된 강의 정보가 없습니다.
+            해당 날짜에 수집된 강의 정보가 없습니다. 데이터 붙여넣기를 통해 추가할 수 있습니다.
           </div>
 
           <div v-else style="display:flex; flex-direction:column; gap:0.6rem;">
@@ -300,15 +392,20 @@
               style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.83rem;"
             >
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.25rem;">
-                <strong style="color:#60a5fa;">{{ l.subject }}</strong>
+                <div style="display:flex; align-items:center; gap:0.4rem;">
+                  <span class="badge primary" style="font-size:0.72rem; font-weight:700;">
+                    {{ cleanTrackName(l.subject) }}
+                  </span>
+                  <strong style="color:#f8fafc;">{{ l.subject }}</strong>
+                </div>
                 <span class="badge" style="font-size:0.7rem; background:rgba(255,255,255,0.08);">
                   {{ l.startTime }} ~ {{ l.endTime }} ({{ l.duration || '2:00' }})
                 </span>
               </div>
-              <div style="color:#e2e8f0; margin-bottom:0.2rem;">📖 {{ l.content }}</div>
-              <div style="display:flex; justify-content:space-between; color:var(--text-muted); font-size:0.75rem;">
-                <span>👨‍🏫 강사: {{ l.instructor }}</span>
-                <span>📍 장소: {{ l.location }}</span>
+              <div style="color:#e2e8f0; margin-bottom:0.2rem; margin-top:0.2rem;">📖 {{ l.content }}</div>
+              <div style="display:flex; justify-content:space-between; color:var(--text-muted); font-size:0.75rem; margin-top:0.3rem;">
+                <span>👨‍🏫 강사: {{ l.instructor || '미지정' }}</span>
+                <span>📍 장소: {{ l.location || '미지정' }}</span>
               </div>
             </div>
           </div>
@@ -332,71 +429,6 @@
           <div v-else style="font-size:0.85rem; color:var(--text-muted);">집계된 강사 정보가 없습니다.</div>
         </div>
 
-      </div>
-    </div>
-
-    <!-- Data Paste & Import Modal -->
-    <div v-if="isPasteModalOpen" class="modal-backdrop" @click.self="isPasteModalOpen = false">
-      <div class="modal-content" style="max-width: 780px; width: 90%;">
-        <div class="modal-header">
-          <h3 style="font-size: 1.15rem; font-weight: 800; color: #f8fafc; margin: 0; display:flex; align-items:center; gap:0.5rem;">
-            <span>📋 라이브 강의 표 데이터 붙여넣기</span>
-          </h3>
-          <button class="modal-close" @click="isPasteModalOpen = false">&times;</button>
-        </div>
-
-        <div class="modal-body mb-3">
-          <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-            SSAFY 포털, 엑셀, 노션 등에서 복사한 강의 표 데이터를 그대로 아래 상자에 붙여넣으세요. (Tab/공백 구분 자동 파싱)
-          </p>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.4rem;">
-            <label class="form-label" style="margin: 0; font-size: 0.82rem; font-weight: 700; color: #cbd5e1;">
-              붙여넣을 데이터 (복사된 텍스트):
-            </label>
-            <button class="btn btn-sm btn-outline" @click="handleFillSampleData" style="font-size:0.75rem; padding: 0.2rem 0.5rem;">
-              ⚡ 예시 표 데이터 채우기
-            </button>
-          </div>
-
-          <textarea 
-            v-model="pasteText"
-            class="form-input" 
-            rows="10" 
-            placeholder="구분	장소	주제	내용	강사명	날짜	요일	방영시간	종료시간	길이
-1학기	구미	코딩 Live강의 Mobile 트랙	WEB : HTML5	허태식 강사	2026-07-20	월	9:00	11:00	2:00
-1학기	온택트룸4(17층)	코딩 Live강의 Java 전공 트랙	Java : 기본문법	조용준 강사	2026-07-21	화	9:00	11:00	2:00..."
-            style="font-family: monospace; font-size: 0.82rem; line-height: 1.4; resize: vertical;"
-          ></textarea>
-
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-top: 0.6rem; font-size: 0.8rem;">
-            <div style="color: #94a3b8;">
-              감지된 줄 수: <strong style="color:#f8fafc;">{{ previewLineCount }}줄</strong>
-            </div>
-
-            <div style="display:flex; gap: 1rem; align-items:center;">
-              <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:#e2e8f0;">
-                <input type="radio" :value="false" v-model="appendMode" />
-                기존 데이터 덮어쓰기
-              </label>
-              <label style="display:flex; align-items:center; gap:0.3rem; cursor:pointer; color:#e2e8f0;">
-                <input type="radio" :value="true" v-model="appendMode" />
-                기존 데이터에 추가 (누적)
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:0.5rem;">
-          <button class="btn btn-outline" @click="isPasteModalOpen = false">취소</button>
-          <button 
-            class="btn btn-primary" 
-            @click="handleProcessBulkText"
-            :disabled="isProcessing || !pasteText.trim()"
-          >
-            {{ isProcessing ? '파싱 및 집계 중...' : '🚀 파싱 및 집계 실행' }}
-          </button>
-        </div>
       </div>
     </div>
   </div>
@@ -438,6 +470,8 @@ interface SummaryResponse {
   minLectureDate: string | null
   maxLectureDate: string | null
   lastProcessedAt: string | null
+  availableTerms?: string[]
+  selectedTerm?: string | null
   trackSummaries: TrackSummary[]
   instructorCounts: Record<string, number>
   locationCounts: Record<string, number>
@@ -445,30 +479,19 @@ interface SummaryResponse {
 }
 
 const summary = ref<SummaryResponse | null>(null)
-const isPasteModalOpen = ref(false)
+const isPastePanelOpen = ref(false) // 상단 즉시 붙여넣기 영역 열림 상태
 const pasteText = ref('')
-const appendMode = ref(false)
+const appendMode = ref(true) // 기본값: 수시 누적 모드
 const isProcessing = ref(false)
-const sortMode = ref<'hours' | 'count'>('hours')
+const sortMode = ref<'count' | 'hours'>('count') // 기본값: 횟수순 정렬
+const selectedTerm = ref<string>('')
 
 // Calendar state
 const calendarYear = ref(2026)
 const calendarMonth = ref(7)
 const selectedDate = ref<string | null>(null)
 
-const samplePromptData = `구분\t장소\t주제\t내용\t강사명\t날짜\t요일\t방영시간\t종료시간\t길이
-1학기\t구미\t코딩 Live강의 Mobile 트랙\tWEB : HTML5\t허태식 강사\t2026-07-20\t월\t9:00\t11:00\t2:00
-1학기\t온택트룸4(17층)\t코딩 Live강의 Java 전공 트랙\tJava : 기본문법\t조용준 강사\t2026-07-20\t월\t9:00\t11:00\t2:00
-1학기\t온택트룸6(17층)\t코딩 Live강의 Java 비전공 트랙\tJava : 기본문법&제어문\t양명균 강사\t2026-07-20\t월\t9:00\t11:00\t2:00
-1학기\t광주\t코딩 Live강의 Embedded Robot 트랙\tWeb 기초 : HTML / CSS\t이자룡 강사\t2026-07-20\t월\t9:00\t11:00\t2:00
-1학기\t대전\t코딩 Live강의 Data 트랙\tweb : HTML & CSS\t김구현 강사\t2026-07-21\t화\t9:00\t11:00\t2:00
-1학기\t17층2호\t코딩 Live강의 Python 트랙\tPython : Basic syntax 1\t김준호 강사\t2026-07-21\t화\t9:00\t11:00\t2:00
-1학기\t17층1호\t코딩 Live강의 Embedded 트랙\tWeb 기초 : HTML / CSS\t변성은 강사\t2026-07-21\t화\t9:00\t11:00\t2:00
-1학기\t온택트룸2(17층)\t데이터 Live강의 마이스터고 트랙\t데이터 사이언스 : RAG\t홍석진 강사\t2026-07-21\t화\t9:00\t11:00\t2:00
-1학기\t온택트룸6(17층)\t코딩 Live강의 Java 비전공 트랙\tJava : Git&실습가이드\t양명균 강사\t2026-07-22\t수\t14:00\t16:00\t2:00
-1학기\t광주\t코딩 Live강의 Embedded Robot 트랙\tWeb 기초 : Display / Flex\t이자룡 강사\t2026-07-22\t수\t14:00\t16:00\t2:00
-1학기\t17층2호\t코딩 Live강의 Python 트랙\tPython : Basic syntax 2\t김준호 강사\t2026-07-22\t수\t14:00\t16:00\t2:00
-1학기\t17층1호\t코딩 Live강의 Embedded 트랙\tWeb 기초 : CSS 연습\t변성은 강사\t2026-07-22\t수\t14:00\t16:00\t2:00`
+
 
 const previewLineCount = computed(() => {
   if (!pasteText.value.trim()) return 0
@@ -478,10 +501,10 @@ const previewLineCount = computed(() => {
 const sortedTrackSummaries = computed(() => {
   if (!summary.value || !summary.value.trackSummaries) return []
   const list = [...summary.value.trackSummaries]
-  if (sortMode.value === 'hours') {
-    return list.sort((a, b) => b.totalHours - a.totalHours)
-  } else {
+  if (sortMode.value === 'count') {
     return list.sort((a, b) => b.lectureCount - a.lectureCount)
+  } else {
+    return list.sort((a, b) => b.totalHours - a.totalHours)
   }
 })
 
@@ -595,9 +618,29 @@ function selectCalendarDate(dateStr: string) {
   }
 }
 
-async function fetchSummary() {
+function cleanTrackName(subject: string | null | undefined): string {
+  if (!subject) return '미지정 트랙'
+  let s = subject.trim()
+  if (s.includes('Live강의')) {
+    const idx = s.indexOf('Live강의')
+    s = s.substring(idx + 'Live강의'.length).trim()
+  } else if (s.startsWith('코딩 ')) {
+    s = s.substring('코딩 '.length).trim()
+  } else if (s.startsWith('데이터 ')) {
+    s = s.substring('데이터 '.length).trim()
+  }
+  return s || subject.trim()
+}
+
+function getTracksTooltip(lectures: LiveLecture[]): string {
+  const tracks = lectures.map(l => cleanTrackName(l.subject))
+  return tracks.join(', ')
+}
+
+async function fetchSummary(term?: string) {
   try {
-    const res = await fetch('/api/lectures/summary')
+    const url = term ? `/api/lectures/summary?term=${encodeURIComponent(term)}` : '/api/lectures/summary'
+    const res = await fetch(url)
     if (res.ok) {
       summary.value = await res.json()
       
@@ -613,6 +656,10 @@ async function fetchSummary() {
   } catch (e) {
     console.error('Failed to fetch lecture summary:', e)
   }
+}
+
+function handleTermChange() {
+  fetchSummary(selectedTerm.value)
 }
 
 async function handleProcessBulkText() {
@@ -636,7 +683,6 @@ async function handleProcessBulkText() {
     }
 
     summary.value = await res.json()
-    isPasteModalOpen.value = false
     pasteText.value = ''
 
     if (summary.value?.minLectureDate) {
@@ -647,7 +693,7 @@ async function handleProcessBulkText() {
       }
     }
 
-    alert('✅ 성공적으로 파싱되어 트랙별 강의시간 및 일자별 달력이 업데이트되었습니다!')
+    alert('✅ 성공적으로 파싱되어 트랙별 강의 횟수 및 날짜별 수집 완료 상태가 업데이트되었습니다!')
   } catch (e) {
     alert('서버 통신 실패: ' + e)
   } finally {
@@ -655,10 +701,7 @@ async function handleProcessBulkText() {
   }
 }
 
-function handleFillSampleData() {
-  pasteText.value = samplePromptData
-  isPasteModalOpen.value = true
-}
+
 
 async function handleClearData() {
   if (!confirm('정말로 모든 라이브 강의 데이터를 초기화(삭제)하시겠습니까?')) return
@@ -667,7 +710,7 @@ async function handleClearData() {
     const res = await fetch('/api/lectures', { method: 'DELETE' })
     if (res.ok) {
       selectedDate.value = null
-      await fetchSummary()
+      await fetchSummary(selectedTerm.value)
       alert('데이터가 초기화되었습니다.')
     }
   } catch (e) {
@@ -728,10 +771,14 @@ onMounted(() => {
   border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 1rem;
+  box-sizing: border-box;
+  width: 100%;
 }
+
 .calendar-header-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
   text-align: center;
   margin-bottom: 0.5rem;
   padding-bottom: 0.4rem;
@@ -753,12 +800,14 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .calendar-cell {
   aspect-ratio: 1.1;
   background: rgba(30, 41, 59, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 0.35rem;
   cursor: default;
@@ -767,28 +816,33 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .calendar-cell.empty-cell {
-  background: transparent;
-  border-color: transparent;
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 .calendar-cell.has-data {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.4);
   cursor: pointer;
 }
 
 .calendar-cell.has-data:hover {
-  background: rgba(16, 185, 129, 0.25);
+  background: rgba(16, 185, 129, 0.28);
   transform: translateY(-1px);
 }
 
 .calendar-cell.is-selected {
   border-color: #34d399 !important;
-  box-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
-  background: rgba(16, 185, 129, 0.3) !important;
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.5) !important;
+  background: rgba(16, 185, 129, 0.32) !important;
 }
 
 .day-number {
@@ -819,5 +873,18 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+.uncollected-badge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.03);
+  color: #64748b;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
 }
 </style>

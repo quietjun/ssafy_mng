@@ -50,7 +50,28 @@ public class LiveLectureService {
 
     @Transactional(readOnly = true)
     public LiveLectureSummaryResponse getSummary() {
-        List<LiveLecture> lectures = lectureRepository.findAll();
+        return getSummary(null);
+    }
+
+    @Transactional(readOnly = true)
+    public LiveLectureSummaryResponse getSummary(String term) {
+        List<LiveLecture> allLectures = lectureRepository.findAll();
+
+        List<String> availableTerms = allLectures.stream()
+                .map(LiveLecture::getTerm)
+                .filter(StringUtils::hasText)
+                .map(String::trim)
+                .distinct()
+                .sorted()
+                .toList();
+
+        List<LiveLecture> lectures = allLectures;
+        if (StringUtils.hasText(term) && !"ALL".equalsIgnoreCase(term)) {
+            lectures = allLectures.stream()
+                    .filter(l -> l.getTerm() != null && term.trim().equalsIgnoreCase(l.getTerm().trim()))
+                    .toList();
+        }
+
         long totalLectures = lectures.size();
 
         if (totalLectures == 0) {
@@ -62,6 +83,8 @@ public class LiveLectureService {
                     .minLectureDate(null)
                     .maxLectureDate(null)
                     .lastProcessedAt(lastProcessedAt)
+                    .availableTerms(availableTerms)
+                    .selectedTerm(term)
                     .trackSummaries(Collections.emptyList())
                     .instructorCounts(Collections.emptyMap())
                     .locationCounts(Collections.emptyMap())
@@ -82,11 +105,11 @@ public class LiveLectureService {
                 .max(Comparator.naturalOrder())
                 .orElse(null);
 
-        // 2. Track Summary calculation (group by subject)
+        // 2. Track Summary calculation (group by normalized track name)
         Map<String, List<LiveLecture>> trackGroupMap = new LinkedHashMap<>();
         for (LiveLecture l : lectures) {
-            String subjectKey = l.getSubject() != null ? l.getSubject().trim() : "미지정 트랙";
-            trackGroupMap.computeIfAbsent(subjectKey, k -> new ArrayList<>()).add(l);
+            String trackName = cleanTrackName(l.getSubject());
+            trackGroupMap.computeIfAbsent(trackName, k -> new ArrayList<>()).add(l);
         }
 
         List<TrackSummaryDto> trackSummaries = new ArrayList<>();
@@ -125,6 +148,7 @@ public class LiveLectureService {
 
             grandTotalHours += trackTotalHours;
 
+            // percentage based on lecture count
             double percentage = Math.round((double) count / totalLectures * 1000.0) / 10.0;
 
             trackSummaries.add(TrackSummaryDto.builder()
@@ -147,8 +171,8 @@ public class LiveLectureService {
             t.setHoursPercentage(hPct);
         }
 
-        // Sort track summaries by totalHours descending (전체 강의 시간 순 정렬)
-        trackSummaries.sort((a, b) -> Double.compare(b.getTotalHours(), a.getTotalHours()));
+        // Sort track summaries by lectureCount descending (기본: 강의 횟수 순 정렬)
+        trackSummaries.sort((a, b) -> Long.compare(b.getLectureCount(), a.getLectureCount()));
 
         // 3. Instructor & Location Counts
         Map<String, Long> instructorCounts = new LinkedHashMap<>();
@@ -178,6 +202,8 @@ public class LiveLectureService {
                 .minLectureDate(minDate)
                 .maxLectureDate(maxDate)
                 .lastProcessedAt(lastProcessedAt)
+                .availableTerms(availableTerms)
+                .selectedTerm(term)
                 .trackSummaries(trackSummaries)
                 .instructorCounts(instructorCounts)
                 .locationCounts(locationCounts)
@@ -196,17 +222,62 @@ public class LiveLectureService {
             throw new IllegalArgumentException("유효한 강의 데이터를 파싱하지 못했습니다. (형식을 확인하세요)");
         }
 
-        if (append == null || !append) {
-            lectureRepository.deleteAll();
+        // Deduplicate parsed lectures within payload itself
+        List<LiveLecture> uniqueParsed = new ArrayList<>();
+        Set<String> seenInPayload = new java.util.HashSet<>();
+        for (LiveLecture l : parsedLectures) {
+            String key = buildDedupeKey(l);
+            if (seenInPayload.add(key)) {
+                uniqueParsed.add(l);
+            }
         }
 
-        lectureRepository.saveAll(parsedLectures);
+        if (append != null && append) {
+            List<LiveLecture> existing = lectureRepository.findAll();
+            Set<String> existingKeys = existing.stream()
+                    .map(this::buildDedupeKey)
+                    .collect(java.util.stream.Collectors.toSet());
+
+            List<LiveLecture> toSave = uniqueParsed.stream()
+                    .filter(l -> !existingKeys.contains(buildDedupeKey(l)))
+                    .toList();
+
+            lectureRepository.saveAll(toSave);
+        } else {
+            lectureRepository.deleteAll();
+            lectureRepository.saveAll(uniqueParsed);
+        }
 
         // Update last processed timestamp metadata
         LocalDateTime now = LocalDateTime.now();
         saveLastProcessedAt(now);
 
         return getSummary();
+    }
+
+    public static String cleanTrackName(String subject) {
+        if (!StringUtils.hasText(subject)) {
+            return "미지정 트랙";
+        }
+        String s = subject.trim();
+        if (s.contains("Live강의")) {
+            int idx = s.indexOf("Live강의");
+            s = s.substring(idx + "Live강의".length()).trim();
+        } else if (s.startsWith("코딩 ")) {
+            s = s.substring("코딩 ".length()).trim();
+        } else if (s.startsWith("데이터 ")) {
+            s = s.substring("데이터 ".length()).trim();
+        }
+
+        return s.isEmpty() ? subject.trim() : s;
+    }
+
+    private String buildDedupeKey(LiveLecture l) {
+        String dateStr = l.getLectureDate() != null ? l.getLectureDate().toString() : "";
+        String subj = l.getSubject() != null ? l.getSubject().trim() : "";
+        String start = l.getStartTime() != null ? l.getStartTime().trim() : "";
+        String loc = l.getLocation() != null ? l.getLocation().trim() : "";
+        return dateStr + "|" + subj + "|" + start + "|" + loc;
     }
 
     @Transactional
