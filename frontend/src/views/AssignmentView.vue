@@ -65,13 +65,26 @@
               </div>
 
               <div class="form-group">
-                <label class="form-label">추가 설명 / 비고 (선택사항)</label>
+                <label class="form-label">📝 문제 본문 / 설명 (이미지 캡처 Ctrl+V 붙여넣기 지원)</label>
+                <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:0.35rem; line-height:1.4;">
+                  💡 SWEA 등 외부 문제의 그림/표는 캡처(Win+Shift+S) 후 아래 입력란에 <strong>Ctrl+V</strong>로 붙여넣으면 이미지가 자동 첨부됩니다.
+                </div>
                 <textarea 
                   v-model="newProblem.description" 
                   class="form-textarea" 
-                  rows="2" 
-                  placeholder="특이사항이나 추가 안내가 있을 경우 작성"
+                  rows="5" 
+                  placeholder="문제 본문 (HTML 태그, 캡처 이미지 Ctrl+V 붙여넣기 또는 드래그&드롭 지원)"
+                  @paste="e => handleTextareaPaste(e, 'new')"
+                  @drop.prevent="e => handleTextareaDrop(e, 'new')"
+                  @dragover.prevent
                 ></textarea>
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.35rem;">
+                  <label class="btn btn-sm btn-outline" style="cursor:pointer; font-size:0.78rem; padding:0.25rem 0.6rem;">
+                    📷 이미지 파일 첨부 (또는 캡처 이미지 Ctrl+V / 드래그&드롭)
+                    <input type="file" accept="image/*" style="display:none;" @change="e => handleImageFileSelect(e, 'new')" />
+                  </label>
+                  <span v-if="isUploadingImage" style="font-size:0.8rem; color:#38bdf8;">⏳ 이미지를 서버로 업로드 중...</span>
+                </div>
               </div>
 
               <div style="display:flex; gap:0.4rem;">
@@ -213,8 +226,26 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">추가 설명 / 비고</label>
-              <textarea v-model="editProblem.description" class="form-textarea" rows="2"></textarea>
+              <label class="form-label">📝 문제 본문 / 설명 (이미지 캡처 Ctrl+V 붙여넣기 지원)</label>
+              <div style="font-size:0.78rem; color:#94a3b8; margin-bottom:0.35rem; line-height:1.4;">
+                💡 SWEA 등 외부 문제의 그림/표는 캡처(Win+Shift+S) 후 아래 입력란에 <strong>Ctrl+V</strong>로 붙여넣으면 이미지가 자동 첨부됩니다.
+              </div>
+              <textarea 
+                v-model="editProblem.description" 
+                class="form-textarea" 
+                rows="5" 
+                placeholder="문제 본문 (HTML 태그, 캡처 이미지 Ctrl+V 붙여넣기 또는 드래그&드롭 지원)"
+                @paste="e => handleTextareaPaste(e, 'edit')"
+                @drop.prevent="e => handleTextareaDrop(e, 'edit')"
+                @dragover.prevent
+              ></textarea>
+              <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.35rem;">
+                <label class="btn btn-sm btn-outline" style="cursor:pointer; font-size:0.78rem; padding:0.25rem 0.6rem;">
+                  📷 이미지 파일 첨부 (또는 캡처 이미지 Ctrl+V / 드래그&드롭)
+                  <input type="file" accept="image/*" style="display:none;" @change="e => handleImageFileSelect(e, 'edit')" />
+                </label>
+                <span v-if="isUploadingImage" style="font-size:0.8rem; color:#38bdf8;">⏳ 이미지를 서버로 업로드 중...</span>
+              </div>
             </div>
 
             <div style="display:flex; gap:0.5rem;">
@@ -589,7 +620,7 @@
           </div>
         </div>
 
-        <div class="modal-body">
+        <div class="modal-body" :style="{ userSelect: isDraggingSplitter ? 'none' : 'auto' }">
           <div class="modal-code-layout">
             <!-- Row 1: Top Summary Box (Explain + Keywords) - Toggleable -->
             <transition name="fade">
@@ -620,14 +651,98 @@
               </div>
             </transition>
 
-            <!-- Row 2: Full Width Large Code Editor with Syntax Highlighting & Line Numbers -->
-            <div class="modal-code-main">
-              <div class="code-view-container">
-                <div class="code-header">
-                  <span style="font-weight: 700; color: #94a3b8; font-size: 0.88rem;">☕ Java Source Code (총 {{ highlightedModalLines.length }}줄)</span>
-                  <button class="btn btn-sm btn-outline" @click="copyCode">📋 코드 전체 복사</button>
+            <!-- Row 2: Split View (Left: Problem & Images | Splitter | Right: Code) -->
+            <div ref="modalSplitContainerRef" class="modal-split-container">
+              <!-- Left Column: Problem Details & Images -->
+              <div class="modal-split-left" :style="{ width: `${modalLeftWidthPercent}%` }">
+                <div class="modal-problem-card">
+                  <div class="problem-card-header">
+                    <div style="display:flex; align-items:center; gap:0.4rem; overflow:hidden;">
+                      <span style="font-weight:700; font-size:0.88rem; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">
+                        📘 {{ problemStore.selectedProblem?.title || '문제 본문' }}
+                      </span>
+                    </div>
+                    <span class="type-tag" style="font-size:0.75rem; padding:0.1rem 0.4rem; flex-shrink:0;">
+                      {{ problemStore.selectedProblem?.platformName || '문제' }}
+                    </span>
+                  </div>
+                  <div class="problem-card-body">
+                    <div v-if="cleanDescription" class="modal-desc-content" v-html="cleanDescription"></div>
+                    <div v-else class="empty-state" style="padding: 2rem 1rem; text-align: center; color: #64748b;">
+                      등록된 문제 본문 및 이미지가 없습니다.
+                    </div>
+                  </div>
                 </div>
-                <pre class="code-block" :style="{ maxHeight: showModalSummary ? '58vh' : '75vh' }"><code class="hljs language-java"><div v-for="(line, idx) in highlightedModalLines" :key="idx" class="code-line-row"><span class="line-number">{{ Number(idx) + 1 }}</span><span class="line-content" v-html="line || '&nbsp;'"></span></div></code></pre>
+              </div>
+
+              <!-- Resizable Splitter Bar -->
+              <div 
+                class="modal-splitter-bar" 
+                :class="{ dragging: isDraggingSplitter }"
+                @mousedown="startSplitterDrag"
+                @touchstart="startSplitterDrag"
+                title="드래그하여 좌우 비율 조절"
+              >
+                <div class="splitter-handle">⋮</div>
+              </div>
+
+              <!-- Right Column: Source Code Viewer -->
+              <div class="modal-split-right" :style="{ width: `calc(${100 - modalLeftWidthPercent}% - 10px)` }">
+                <div class="modal-code-main">
+                  <div :class="['code-view-container', `theme-${codeThemeMode}`]">
+                    <div class="code-header" style="flex-wrap: wrap; gap: 0.6rem;">
+                      <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                        <span style="font-weight: 700; font-size: 0.88rem;">☕ Java Source Code (총 {{ highlightedModalLines.length }}줄)</span>
+                        <span class="badge info" style="font-size:0.75rem;">📽️ 빔프로젝터 가독성 모드</span>
+                      </div>
+
+                      <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+                        <!-- Projector Theme Preset Selector -->
+                        <div class="theme-selector-group" style="display:flex; align-items:center; gap:0.2rem; background:rgba(0,0,0,0.25); padding:0.2rem; border-radius:6px; border:1px solid rgba(255,255,255,0.15);">
+                          <button 
+                            type="button" 
+                            class="theme-btn" 
+                            :class="{ active: codeThemeMode === 'beam-light' }"
+                            @click="setCodeThemeMode('beam-light')"
+                            title="빔프로젝터 발표용 고대비 라이트 테마 (밝고 선명함 - 강력 추천!)"
+                          >
+                            💡 빔프로젝터 라이트 (추천)
+                          </button>
+                          <button 
+                            type="button" 
+                            class="theme-btn" 
+                            :class="{ active: codeThemeMode === 'beam-dark' }"
+                            @click="setCodeThemeMode('beam-dark')"
+                            title="빔프로젝터 발표용 고대비 다크 테마 (칠흑 배경 + 네온 고대비)"
+                          >
+                            🕶️ 빔프로젝터 다크
+                          </button>
+                          <button 
+                            type="button" 
+                            class="theme-btn" 
+                            :class="{ active: codeThemeMode === 'atom-dark' }"
+                            @click="setCodeThemeMode('atom-dark')"
+                            title="기본 다크 테마"
+                          >
+                            💻 기본 다크
+                          </button>
+                        </div>
+
+                        <!-- Font Size Scaler -->
+                        <div class="font-size-controls" style="display:flex; align-items:center; gap:0.25rem; background:rgba(0,0,0,0.25); padding:0.25rem 0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.15);">
+                          <span style="font-size:0.78rem; font-weight:700; margin-right:0.2rem;">글꼴: {{ codeFontSize }}px</span>
+                          <button type="button" class="btn-icon-sm" @click="adjustFontSize(-1)" title="글꼴 축소">A-</button>
+                          <button type="button" class="btn-icon-sm" @click="adjustFontSize(1)" title="글꼴 확대">A+</button>
+                          <button type="button" class="btn-icon-sm" @click="resetFontSize" title="글꼴 초기화(18px)">🔄</button>
+                        </div>
+
+                        <button class="btn btn-sm btn-outline" @click="copyCode">📋 코드 전체 복사</button>
+                      </div>
+                    </div>
+
+                    <pre class="code-block" :style="{ fontSize: `${codeFontSize}px` }"><code class="hljs language-java"><div v-for="(line, idx) in highlightedModalLines" :key="idx" :class="['code-line-row', { 'line-highlighted': activeHighlightedLine === Number(idx) }]" @click="toggleLineHighlight(Number(idx))" title="클릭하여 발표 라인 강조/해제"><span class="line-number">{{ Number(idx) + 1 }}</span><span class="line-content" v-html="line || '&nbsp;'"></span></div></code></pre>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -693,8 +808,79 @@ const step2Data = ref({
 
 const newKeywordInput = ref('')
 const modalSubmission = ref<any>(null)
-const showModalSummary = ref(true)
+const showModalSummary = ref(false)
 const peerSubmissions = ref<any[]>([])
+
+// 빔프로젝터 가독성 테마 & 글꼴 크기 & 발표 포인터 상태 관리
+const codeThemeMode = ref<'beam-light' | 'beam-dark' | 'atom-dark'>(
+  (localStorage.getItem('code_projector_theme') as any) || 'beam-light'
+)
+const codeFontSize = ref<number>(
+  Number(localStorage.getItem('code_font_size')) || 18
+)
+const activeHighlightedLine = ref<number | null>(null)
+
+// 모달 좌우 분할 스플리터 바 상태 관리 (기본 40% 좌측, 60% 우측)
+const modalLeftWidthPercent = ref<number>(
+  Number(localStorage.getItem('code_modal_split_ratio')) || 40
+)
+const isDraggingSplitter = ref(false)
+const modalSplitContainerRef = ref<HTMLElement | null>(null)
+
+function startSplitterDrag(e: MouseEvent | TouchEvent) {
+  isDraggingSplitter.value = true
+  document.addEventListener('mousemove', onSplitterDrag)
+  document.addEventListener('mouseup', stopSplitterDrag)
+  document.addEventListener('touchmove', onSplitterDrag)
+  document.addEventListener('touchend', stopSplitterDrag)
+}
+
+function onSplitterDrag(e: MouseEvent | TouchEvent) {
+  if (!isDraggingSplitter.value || !modalSplitContainerRef.value) return
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const rect = modalSplitContainerRef.value.getBoundingClientRect()
+  const offsetX = clientX - rect.left
+  const newPercent = Math.max(20, Math.min(80, (offsetX / rect.width) * 100))
+  modalLeftWidthPercent.value = Math.round(newPercent)
+}
+
+function stopSplitterDrag() {
+  if (isDraggingSplitter.value) {
+    isDraggingSplitter.value = false
+    localStorage.setItem('code_modal_split_ratio', String(modalLeftWidthPercent.value))
+    document.removeEventListener('mousemove', onSplitterDrag)
+    document.removeEventListener('mouseup', stopSplitterDrag)
+    document.removeEventListener('touchmove', onSplitterDrag)
+    document.removeEventListener('touchend', stopSplitterDrag)
+  }
+}
+
+onUnmounted(() => {
+  stopSplitterDrag()
+})
+
+function setCodeThemeMode(mode: 'beam-light' | 'beam-dark' | 'atom-dark') {
+  codeThemeMode.value = mode
+  localStorage.setItem('code_projector_theme', mode)
+}
+
+function adjustFontSize(delta: number) {
+  codeFontSize.value = Math.max(12, Math.min(36, codeFontSize.value + delta))
+  localStorage.setItem('code_font_size', String(codeFontSize.value))
+}
+
+function resetFontSize() {
+  codeFontSize.value = 18
+  localStorage.setItem('code_font_size', '18')
+}
+
+function toggleLineHighlight(lineIdx: number) {
+  if (activeHighlightedLine.value === lineIdx) {
+    activeHighlightedLine.value = null
+  } else {
+    activeHighlightedLine.value = lineIdx
+  }
+}
 const allStudents = ref<{ sno: string; name: string }[]>([])
 const fileInput = ref<HTMLInputElement | null>(null)
 const imageInput = ref<HTMLInputElement | null>(null)
@@ -868,7 +1054,16 @@ const cleanDescription = computed(() => {
   let cleaned = desc.replace(/문제 링크:\s*https?:\/\/[^\s]+/gi, '').trim()
   cleaned = cleaned.replace(/^https?:\/\/[^\s]+$/gm, '').trim()
   if (!cleaned) return ''
-  return cleaned.replace(/\n/g, '<br>')
+
+  // Relative SWEA image URL auto-prefixing (e.g. /main/common/fileDownload.do -> https://swexpertacademy.com/main/common/fileDownload.do)
+  cleaned = cleaned.replace(/src="\/main\/common\//gi, 'src="https://swexpertacademy.com/main/common/')
+  cleaned = cleaned.replace(/src='\/main\/common\//gi, "src='https://swexpertacademy.com/main/common/")
+
+  // If plain text without HTML tags, convert newlines to <br>
+  if (!/<[a-z][\s\S]*>/i.test(cleaned)) {
+    cleaned = cleaned.replace(/\n/g, '<br>')
+  }
+  return cleaned
 })
 
 function formatShortDateTime(dtStr?: string) {
@@ -975,6 +1170,87 @@ async function handleDeleteProblem() {
     await loadProblems()
   } catch (e) {
     alert('문제 삭제 실패')
+  }
+}
+
+// 이미지 파일 업로드 및 붙여넣기(Ctrl+V) 처리
+const isUploadingImage = ref(false)
+
+async function uploadImageFile(file: File): Promise<string | null> {
+  if (!file || !file.type.startsWith('image/')) {
+    alert('이미지 파일만 업로드 가능합니다.')
+    return null
+  }
+  isUploadingImage.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await api.post('/api/problems/upload-image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    if (res.data && res.data.url) {
+      return res.data.url
+    }
+  } catch (err: any) {
+    alert('이미지 업로드에 실패했습니다: ' + (err.response?.data?.message || err.message))
+  } finally {
+    isUploadingImage.value = false
+  }
+  return null
+}
+
+async function handleImageFileSelect(e: Event, target: 'new' | 'edit') {
+  const input = e.target as HTMLInputElement
+  if (!input.files || input.files.length === 0) return
+  const file = input.files[0]
+  const url = await uploadImageFile(file)
+  if (url) {
+    const imgTag = `<br><img src="${url}" alt="문제 이미지"><br>`
+    if (target === 'new') {
+      newProblem.value.description = (newProblem.value.description || '') + imgTag
+    } else {
+      editProblem.value.description = (editProblem.value.description || '') + imgTag
+    }
+  }
+  input.value = ''
+}
+
+async function handleTextareaPaste(e: ClipboardEvent, target: 'new' | 'edit') {
+  const items = e.clipboardData?.items
+  if (!items) return
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].type.indexOf('image') !== -1) {
+      e.preventDefault()
+      const file = items[i].getAsFile()
+      if (file) {
+        const url = await uploadImageFile(file)
+        if (url) {
+          const imgTag = `<br><img src="${url}" alt="문제 이미지"><br>`
+          if (target === 'new') {
+            newProblem.value.description = (newProblem.value.description || '') + imgTag
+          } else {
+            editProblem.value.description = (editProblem.value.description || '') + imgTag
+          }
+        }
+      }
+    }
+  }
+}
+
+async function handleTextareaDrop(e: DragEvent, target: 'new' | 'edit') {
+  const files = e.dataTransfer?.files
+  if (!files || files.length === 0) return
+  const file = files[0]
+  if (file.type.startsWith('image/')) {
+    const url = await uploadImageFile(file)
+    if (url) {
+      const imgTag = `<br><img src="${url}" alt="문제 이미지"><br>`
+      if (target === 'new') {
+        newProblem.value.description = (newProblem.value.description || '') + imgTag
+      } else {
+        editProblem.value.description = (editProblem.value.description || '') + imgTag
+      }
+    }
   }
 }
 

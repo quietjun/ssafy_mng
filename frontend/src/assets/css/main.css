@@ -599,15 +599,44 @@ input[type="date"].form-input {
     white-space: pre-wrap;
 }
 
+/* Problem HTML Description Box */
+.problem-desc-box {
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    color: #e2e8f0;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    overflow-x: auto;
+}
+.problem-desc-box p {
+    margin-bottom: 0.6rem;
+}
+.problem-desc-box strong {
+    color: #38bdf8;
+    font-weight: 700;
+}
+.problem-desc-box img {
+    max-width: 100%;
+    height: auto !important;
+    display: inline-block;
+    margin: 0.5rem 0;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+}
+
 /* Large / Fullscreen Code Viewer Modal */
 .modal-code-fullscreen {
-    width: 92vw !important;
-    max-width: 1440px !important;
-    height: auto !important;
-    max-height: 88vh !important;
+    width: 96vw !important;
+    max-width: none !important;
+    height: 94vh !important;
+    max-height: 94vh !important;
     display: flex !important;
     flex-direction: column !important;
-    padding: 1.25rem 1.5rem !important;
+    padding: 1rem 1.25rem !important;
     gap: 0.75rem;
 }
 
@@ -615,17 +644,153 @@ input[type="date"].form-input {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
+    overflow: hidden;
     padding: 0;
     min-height: 0;
-    max-height: calc(88vh - 70px);
+    max-height: none !important;
 }
 
 .modal-code-layout {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.75rem;
     width: 100%;
+    height: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+/* Splitter Container in Code Modal */
+.modal-split-container {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    gap: 0;
+}
+
+.modal-split-left {
+    display: flex;
+    flex-direction: column;
+    min-width: 220px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.modal-problem-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    background: #1e222b;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.modal-problem-card .problem-card-header {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.modal-problem-card .problem-card-body {
+    flex: 1;
+    padding: 1.25rem;
+    overflow-y: auto;
+    min-height: 0;
+    color: #e2e8f0;
+    font-size: 0.92rem;
+    line-height: 1.7;
+}
+
+.modal-desc-content {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #e2e8f0;
+}
+.modal-desc-content p {
+    margin-bottom: 0.6rem;
+    color: #e2e8f0;
+}
+.modal-desc-content strong {
+    color: #38bdf8;
+    font-weight: 700;
+}
+.modal-desc-content img {
+    max-width: 100%;
+    height: auto !important;
+    display: inline-block;
+    margin: 0.5rem 0;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px;
+}
+
+.modal-splitter-bar {
+    width: 10px;
+    cursor: col-resize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
+    transition: background 0.15s ease;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.modal-splitter-bar:hover,
+.modal-splitter-bar.dragging {
+    background: #38bdf8;
+}
+
+.modal-splitter-bar .splitter-handle {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    pointer-events: none;
+    font-weight: 700;
+}
+
+.modal-splitter-bar:hover .splitter-handle,
+.modal-splitter-bar.dragging .splitter-handle {
+    color: #0f172a;
+}
+
+.modal-split-right {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 320px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .modal-split-container {
+        flex-direction: column;
+        overflow-y: auto;
+    }
+    .modal-split-left,
+    .modal-split-right {
+        width: 100% !important;
+        height: auto;
+    }
+    .modal-splitter-bar {
+        display: none;
+    }
 }
 
 /* Row 1: Top Summary Box (2 columns: Explain + Keywords) */
@@ -666,12 +831,20 @@ input[type="date"].form-input {
     overflow: hidden;
     background: #1e222b;
     width: 100%;
+    flex: 1;
+    min-height: 0;
 }
 
 .code-view-container {
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 100%;
+    flex: 1;
+    min-height: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    transition: all 0.25s ease;
 }
 
 .code-view-container .code-header {
@@ -686,31 +859,33 @@ input[type="date"].form-input {
 
 .code-view-container pre.code-block {
     flex: 1;
+    height: 100%;
+    min-height: 0;
     margin: 0;
     padding: 1.25rem 1.5rem;
     overflow: auto;
-    max-height: 60vh;
-    font-family: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, Monaco, monospace;
-    font-size: 0.92rem;
-    line-height: 1.65;
+    max-height: none;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, Consolas, Monaco, monospace;
+    font-size: 1.1rem;
+    line-height: 1.7;
     background: #1e222b;
     color: #abb2bf;
 }
 
 /* Custom Sleek Scrollbar for Code Block */
 .code-view-container pre.code-block::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
 }
 .code-view-container pre.code-block::-webkit-scrollbar-track {
-    background: #181a1f;
+    background: rgba(0, 0, 0, 0.2);
 }
 .code-view-container pre.code-block::-webkit-scrollbar-thumb {
-    background: #4b5263;
+    background: rgba(148, 163, 184, 0.5);
     border-radius: 4px;
 }
 .code-view-container pre.code-block::-webkit-scrollbar-thumb:hover {
-    background: #5c6370;
+    background: rgba(148, 163, 184, 0.8);
 }
 
 .code-view-container pre.code-block code.hljs {
@@ -720,26 +895,26 @@ input[type="date"].form-input {
     display: block;
 }
 
-/* IDE Code Line Numbering */
+/* IDE Code Line Numbering & Presentation Pointer */
 .code-line-row {
     display: flex;
     min-width: 100%;
-    line-height: 1.65;
-}
-
-.code-line-row:hover {
-    background: rgba(255, 255, 255, 0.04);
+    line-height: 1.7;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-left: 4px solid transparent;
 }
 
 .line-number {
-    width: 42px;
-    min-width: 42px;
+    width: 48px;
+    min-width: 48px;
     padding-right: 1rem;
     text-align: right;
     color: #636d83;
     user-select: none;
-    font-size: 0.82rem;
-    border-right: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.88rem;
+    font-weight: 700;
+    border-right: 1px solid rgba(255, 255, 255, 0.15);
     margin-right: 1rem;
     flex-shrink: 0;
 }
@@ -749,6 +924,234 @@ input[type="date"].form-input {
     white-space: pre;
     tab-size: 4;
     overflow-x: visible;
+}
+
+/* ==========================================================================
+   Beam Projector High-Contrast Code Themes & Presentation Mode
+   ========================================================================== */
+
+.theme-selector-group {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.theme-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #94a3b8;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.theme-btn.active {
+    background: var(--primary);
+    color: #ffffff !important;
+    border-color: var(--primary);
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+.font-size-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.btn-icon-sm {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-icon-sm:hover {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+/* --- Theme 1: 💡 빔프로젝터 고대비 라이트 테마 (High-Contrast Beam Light - Recommended for Projectors) --- */
+.code-view-container.theme-beam-light {
+    background: #ffffff !important;
+    border: 2px solid #94a3b8 !important;
+    color: #000000 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.code-view-container.theme-beam-light .code-header {
+    background: #e2e8f0 !important;
+    border-bottom: 2px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+.code-view-container.theme-beam-light pre.code-block {
+    background: #ffffff !important;
+    color: #090d16 !important;
+    font-weight: 600 !important;
+}
+
+.code-view-container.theme-beam-light .line-number {
+    background: #f1f5f9 !important;
+    color: #1e293b !important;
+    font-weight: 800 !important;
+    border-right: 2px solid #94a3b8 !important;
+}
+
+.code-view-container.theme-beam-light .code-line-row:hover {
+    background: #fef08a !important; /* Soft yellow hover line tracking */
+}
+
+.code-view-container.theme-beam-light .code-line-row.line-highlighted {
+    background: #fde047 !important; /* High-contrast yellow pointer */
+    border-left: 5px solid #d97706 !important;
+    font-weight: 800 !important;
+}
+
+/* Beam Light Syntax Color Overrides */
+.code-view-container.theme-beam-light .hljs-keyword,
+.code-view-container.theme-beam-light .hljs-selector-tag,
+.code-view-container.theme-beam-light .hljs-subst {
+    color: #0022cc !important; /* Bold Royal Blue */
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-light .hljs-string,
+.code-view-container.theme-beam-light .hljs-title,
+.code-view-container.theme-beam-light .hljs-section,
+.code-view-container.theme-beam-light .hljs-attribute {
+    color: #b91c1c !important; /* Deep Crimson Red */
+    font-weight: 700 !important;
+}
+
+.code-view-container.theme-beam-light .hljs-comment,
+.code-view-container.theme-beam-light .hljs-quote,
+.code-view-container.theme-beam-light .hljs-meta {
+    color: #15803d !important; /* Dark Forest Green */
+    font-weight: 700 !important;
+    font-style: italic !important;
+}
+
+.code-view-container.theme-beam-light .hljs-number,
+.code-view-container.theme-beam-light .hljs-literal,
+.code-view-container.theme-beam-light .hljs-symbol,
+.code-view-container.theme-beam-light .hljs-bullet {
+    color: #6b21a8 !important; /* Deep Violet / Purple */
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-light .hljs-function,
+.code-view-container.theme-beam-light .hljs-title.function_,
+.code-view-container.theme-beam-light .hljs-params {
+    color: #0284c7 !important; /* Deep Ocean Blue */
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-light .hljs-type,
+.code-view-container.theme-beam-light .hljs-class,
+.code-view-container.theme-beam-light .hljs-built_in {
+    color: #b45309 !important; /* Deep Amber / Brown */
+    font-weight: 800 !important;
+}
+
+/* --- Theme 2: 🕶️ 빔프로젝터 고대비 다크 테마 (High-Contrast Beam Dark - Pitch Black) --- */
+.code-view-container.theme-beam-dark {
+    background: #000000 !important;
+    border: 2px solid #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 25px rgba(56, 189, 248, 0.3) !important;
+}
+
+.code-view-container.theme-beam-dark .code-header {
+    background: #0f172a !important;
+    border-bottom: 2px solid #38bdf8 !important;
+    color: #38bdf8 !important;
+}
+
+.code-view-container.theme-beam-dark pre.code-block {
+    background: #000000 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+.code-view-container.theme-beam-dark .line-number {
+    background: #090d16 !important;
+    color: #94a3b8 !important;
+    font-weight: 800 !important;
+    border-right: 2px solid #38bdf8 !important;
+}
+
+.code-view-container.theme-beam-dark .code-line-row:hover {
+    background: rgba(56, 189, 248, 0.2) !important;
+}
+
+.code-view-container.theme-beam-dark .code-line-row.line-highlighted {
+    background: rgba(245, 158, 11, 0.35) !important;
+    border-left: 5px solid #f59e0b !important;
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-dark .hljs-keyword {
+    color: #60a5fa !important;
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-dark .hljs-string {
+    color: #f87171 !important;
+    font-weight: 700 !important;
+}
+
+.code-view-container.theme-beam-dark .hljs-comment {
+    color: #4ade80 !important;
+    font-weight: 700 !important;
+}
+
+.code-view-container.theme-beam-dark .hljs-number {
+    color: #c084fc !important;
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-dark .hljs-function,
+.code-view-container.theme-beam-dark .hljs-title.function_ {
+    color: #38bdf8 !important;
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-dark .hljs-type,
+.code-view-container.theme-beam-dark .hljs-class {
+    color: #fbbf24 !important;
+    font-weight: 800 !important;
+}
+
+/* --- Theme 3: 💻 Standard Developer Dark Theme --- */
+.code-view-container.theme-atom-dark {
+    background: #1e222b !important;
+    border: 1px solid var(--border-color) !important;
+    color: #abb2bf !important;
+}
+
+.code-view-container.theme-atom-dark .code-header {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    color: #94a3b8 !important;
+}
+
+.code-view-container.theme-atom-dark pre.code-block {
+    background: #1e222b !important;
+    color: #abb2bf !important;
 }
 .code-block {
     padding: 1rem;

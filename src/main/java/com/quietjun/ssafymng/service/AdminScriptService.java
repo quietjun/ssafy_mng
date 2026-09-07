@@ -126,7 +126,7 @@ trs.forEach(function(tr){
         loginid = loginid.substr(0, loginid.indexOf("@"));
         let score = tds[11].innerHTML;
         tscript += sno.innerHTML + "\\t" + name + "\\t" + loginid + "\\t" + score + "\\n";
-        total += '("' + sno.innerHTML + '","' + name + '","' + loginid + '","' + score + '",""),\\n';
+        total += "(\\"" + sno.innerHTML + "\\",\\"" + name + "\\",\\"" + loginid + "\\",\\"" + score + "\\",\\"\\"),\\n";
     }
 });
 console.log(tscript);
@@ -151,7 +151,7 @@ trs.forEach(function(tr){
         let name = tds[3].querySelector("a").innerHTML;
         let score = tds[13].innerHTML;
         tscript += sno + "\\t" + name + "\\t" + score + "\\n";
-        total += '("' + sno + '","' + name + '","' + score + '",""),\\n';
+        total += "(\\"" + sno + "\\",\\"" + name + "\\",\\"" + score + "\\",\\"\\"),\\n";
     }
 });
 console.log(tscript);

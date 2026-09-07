@@ -22,12 +22,50 @@ import com.quietjun.ssafymng.service.ProblemService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.multipart.MultipartFile;
+
 @RestController
 @RequestMapping("/api/problems")
 @RequiredArgsConstructor
 public class ProblemController {
 
     private final ProblemService problemService;
+
+    @Value("${app.upload.dir:./data/uploads}")
+    private String uploadDir;
+
+    @PostMapping("/upload-image")
+    public ResponseEntity<?> uploadProblemImage(@RequestParam("file") MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "업로드할 파일이 없습니다."));
+        }
+        try {
+            Path targetFolder = Paths.get(uploadDir, "problems").toAbsolutePath().normalize();
+            Files.createDirectories(targetFolder);
+
+            String ext = "";
+            String orig = file.getOriginalFilename();
+            if (orig != null && orig.contains(".")) {
+                ext = orig.substring(orig.lastIndexOf("."));
+            } else {
+                ext = ".png";
+            }
+
+            String newName = UUID.randomUUID().toString() + ext;
+            Path destination = targetFolder.resolve(newName);
+            file.transferTo(destination.toFile());
+
+            String imageUrl = "/uploads/problems/" + newName;
+            return ResponseEntity.ok(Map.of("success", true, "url", imageUrl));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "이미지 업로드 실패: " + e.getMessage()));
+        }
+    }
 
     @GetMapping
     public ResponseEntity<List<ProblemDto>> getProblemsByDate(
