@@ -35,7 +35,7 @@
       <div class="nav-auth">
         <div v-if="authStore.isAuthenticated" class="user-info-box">
           <span :class="['user-role-tag', { admin: authStore.isAdmin }]" style="font-size: 0.82rem; padding: 0.25rem 0.6rem;">
-            {{ authStore.isAdmin ? '👑 관리자' : `${authStore.user?.name} (${authStore.user?.sno})` }}
+            {{ authStore.isAdmin ? '🛡️ 관리자' : `${authStore.user?.name} (${authStore.user?.sno})` }}
           </span>
           <button class="btn btn-sm btn-outline" @click="$emit('open-password-modal')">비밀번호 변경</button>
           <button class="btn btn-sm btn-danger" @click="handleLogout">로그아웃</button>

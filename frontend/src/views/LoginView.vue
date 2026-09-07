@@ -12,7 +12,7 @@
           <select v-model="selectedSno" class="form-input" required @focus="handleFocus">
             <option value="">-- 사용자(이름 / 학번)를 선택하세요 --</option>
             <option v-for="u in authStore.usersList" :key="u.sno" :value="u.sno">
-              {{ u.role === 'ROLE_ADMIN' ? `👑 [관리자] ${u.name} (${u.sno})` : `👤 ${u.name} (${u.sno})` }}
+              {{ u.role === 'ROLE_ADMIN' ? `🛡️ [관리자] ${u.name} (${u.sno})` : `👤 ${u.name} (${u.sno})` }}
             </option>
           </select>
         </div>
