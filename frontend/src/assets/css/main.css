@@ -1008,9 +1008,9 @@ input[type="date"].form-input {
 /* --- Theme 1: 💡 빔프로젝터 고대비 라이트 테마 (High-Contrast Beam Light - Recommended for Projectors) --- */
 .code-view-container.theme-beam-light {
     background: #ffffff !important;
-    border: 2px solid #94a3b8 !important;
-    color: #000000 !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+    border: 2px solid #64748b !important;
+    color: #0f172a !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
 }
 
 .code-view-container.theme-beam-light .code-header {
@@ -1019,15 +1019,17 @@ input[type="date"].form-input {
     color: #0f172a !important;
 }
 
-.code-view-container.theme-beam-light pre.code-block {
+.code-view-container.theme-beam-light pre.code-block,
+.code-view-container.theme-beam-light pre.code-block code.hljs,
+.code-view-container.theme-beam-light .line-content {
     background: #ffffff !important;
-    color: #090d16 !important;
-    font-weight: 600 !important;
+    color: #0f172a !important; /* Ultra-sharp deep charcoal black for untagged symbols, parens, dots, Integer.parseInt etc. */
+    font-weight: 700 !important;
 }
 
 .code-view-container.theme-beam-light .line-number {
     background: #f1f5f9 !important;
-    color: #1e293b !important;
+    color: #334155 !important;
     font-weight: 800 !important;
     border-right: 2px solid #94a3b8 !important;
 }
@@ -1044,14 +1046,12 @@ input[type="date"].form-input {
 
 /* Beam Light Syntax Color Overrides */
 .code-view-container.theme-beam-light .hljs-keyword,
-.code-view-container.theme-beam-light .hljs-selector-tag,
-.code-view-container.theme-beam-light .hljs-subst {
+.code-view-container.theme-beam-light .hljs-selector-tag {
     color: #0022cc !important; /* Bold Royal Blue */
     font-weight: 800 !important;
 }
 
 .code-view-container.theme-beam-light .hljs-string,
-.code-view-container.theme-beam-light .hljs-title,
 .code-view-container.theme-beam-light .hljs-section,
 .code-view-container.theme-beam-light .hljs-attribute {
     color: #b91c1c !important; /* Deep Crimson Red */
@@ -1070,22 +1070,30 @@ input[type="date"].form-input {
 .code-view-container.theme-beam-light .hljs-literal,
 .code-view-container.theme-beam-light .hljs-symbol,
 .code-view-container.theme-beam-light .hljs-bullet {
-    color: #6b21a8 !important; /* Deep Violet / Purple */
+    color: #7e22ce !important; /* Deep Purple */
     font-weight: 800 !important;
 }
 
 .code-view-container.theme-beam-light .hljs-function,
-.code-view-container.theme-beam-light .hljs-title.function_,
-.code-view-container.theme-beam-light .hljs-params {
-    color: #0284c7 !important; /* Deep Ocean Blue */
+.code-view-container.theme-beam-light .hljs-title.function_ {
+    color: #6b21a8 !important; /* Vivid Violet/Purple Method Names */
     font-weight: 800 !important;
 }
 
 .code-view-container.theme-beam-light .hljs-type,
 .code-view-container.theme-beam-light .hljs-class,
-.code-view-container.theme-beam-light .hljs-built_in {
-    color: #b45309 !important; /* Deep Amber / Brown */
+.code-view-container.theme-beam-light .hljs-built_in,
+.code-view-container.theme-beam-light .hljs-title.class_ {
+    color: #9a3412 !important; /* Deep Rust Brown / Amber Class Types */
     font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-light .hljs-params,
+.code-view-container.theme-beam-light .hljs-subst,
+.code-view-container.theme-beam-light .hljs-variable,
+.code-view-container.theme-beam-light .hljs-property {
+    color: #0f172a !important; /* Ensure params and properties are dark slate black */
+    font-weight: 700 !important;
 }
 
 /* --- Theme 2: 🕶️ 빔프로젝터 고대비 다크 테마 (High-Contrast Beam Dark - Pitch Black) --- */
@@ -1102,10 +1110,12 @@ input[type="date"].form-input {
     color: #38bdf8 !important;
 }
 
-.code-view-container.theme-beam-dark pre.code-block {
+.code-view-container.theme-beam-dark pre.code-block,
+.code-view-container.theme-beam-dark pre.code-block code.hljs,
+.code-view-container.theme-beam-dark .line-content {
     background: #000000 !important;
-    color: #ffffff !important;
-    font-weight: 600 !important;
+    color: #f8fafc !important; /* Sharp bright white for untagged symbols */
+    font-weight: 700 !important;
 }
 
 .code-view-container.theme-beam-dark .line-number {
@@ -1126,7 +1136,7 @@ input[type="date"].form-input {
 }
 
 .code-view-container.theme-beam-dark .hljs-keyword {
-    color: #60a5fa !important;
+    color: #38bdf8 !important;
     font-weight: 800 !important;
 }
 
@@ -1147,17 +1157,128 @@ input[type="date"].form-input {
 
 .code-view-container.theme-beam-dark .hljs-function,
 .code-view-container.theme-beam-dark .hljs-title.function_ {
-    color: #38bdf8 !important;
+    color: #e879f9 !important;
     font-weight: 800 !important;
 }
 
 .code-view-container.theme-beam-dark .hljs-type,
-.code-view-container.theme-beam-dark .hljs-class {
+.code-view-container.theme-beam-dark .hljs-class,
+.code-view-container.theme-beam-dark .hljs-built_in,
+.code-view-container.theme-beam-dark .hljs-title.class_ {
     color: #fbbf24 !important;
     font-weight: 800 !important;
 }
 
-/* --- Theme 3: 💻 Standard Developer Dark Theme --- */
+.code-view-container.theme-beam-dark .hljs-params,
+.code-view-container.theme-beam-dark .hljs-subst,
+.code-view-container.theme-beam-dark .hljs-variable,
+.code-view-container.theme-beam-dark .hljs-property {
+    color: #f8fafc !important;
+    font-weight: 700 !important;
+}
+
+/* --- Theme 3: 📄 빔프로젝터 웜 세피아 테마 (Warm Paper High-Contrast) --- */
+.code-view-container.theme-beam-warm {
+    background: #faf6ee !important;
+    border: 2px solid #d97706 !important;
+    color: #1c1917 !important;
+    box-shadow: 0 4px 20px rgba(180, 83, 9, 0.15) !important;
+}
+
+.code-view-container.theme-beam-warm .code-header {
+    background: #f3ece0 !important;
+    border-bottom: 2px solid #e7d8c5 !important;
+    color: #451a03 !important;
+}
+
+.code-view-container.theme-beam-warm pre.code-block,
+.code-view-container.theme-beam-warm pre.code-block code.hljs,
+.code-view-container.theme-beam-warm .line-content {
+    background: #faf6ee !important;
+    color: #1c1917 !important;
+    font-weight: 700 !important;
+}
+
+.code-view-container.theme-beam-warm .line-number {
+    background: #f3ece0 !important;
+    color: #78350f !important;
+    font-weight: 800 !important;
+    border-right: 2px solid #d97706 !important;
+}
+
+.code-view-container.theme-beam-warm .code-line-row:hover {
+    background: #fde68a !important;
+}
+
+.code-view-container.theme-beam-warm .code-line-row.line-highlighted {
+    background: #fcd34d !important;
+    border-left: 5px solid #b45309 !important;
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-beam-warm .hljs-keyword { color: #9a3412 !important; font-weight: 800 !important; }
+.code-view-container.theme-beam-warm .hljs-string { color: #991b1b !important; font-weight: 700 !important; }
+.code-view-container.theme-beam-warm .hljs-comment { color: #15803d !important; font-weight: 700 !important; }
+.code-view-container.theme-beam-warm .hljs-number { color: #6b21a8 !important; font-weight: 800 !important; }
+.code-view-container.theme-beam-warm .hljs-function,
+.code-view-container.theme-beam-warm .hljs-title.function_ { color: #0369a1 !important; font-weight: 800 !important; }
+.code-view-container.theme-beam-warm .hljs-type,
+.code-view-container.theme-beam-warm .hljs-class,
+.code-view-container.theme-beam-warm .hljs-built_in { color: #b45309 !important; font-weight: 800 !important; }
+.code-view-container.theme-beam-warm .hljs-params,
+.code-view-container.theme-beam-warm .hljs-subst { color: #1c1917 !important; font-weight: 700 !important; }
+
+/* --- Theme 4: 💻 VS Code Dark Theme --- */
+.code-view-container.theme-vscode-dark {
+    background: #1e1e1e !important;
+    border: 1px solid #3c3c3c !important;
+    color: #d4d4d4 !important;
+}
+
+.code-view-container.theme-vscode-dark .code-header {
+    background: #252526 !important;
+    border-bottom: 1px solid #3c3c3c !important;
+    color: #cccccc !important;
+}
+
+.code-view-container.theme-vscode-dark pre.code-block,
+.code-view-container.theme-vscode-dark pre.code-block code.hljs,
+.code-view-container.theme-vscode-dark .line-content {
+    background: #1e1e1e !important;
+    color: #d4d4d4 !important;
+    font-weight: 600 !important;
+}
+
+.code-view-container.theme-vscode-dark .line-number {
+    background: #1e1e1e !important;
+    color: #858585 !important;
+    font-weight: 700 !important;
+    border-right: 1px solid #333333 !important;
+}
+
+.code-view-container.theme-vscode-dark .code-line-row:hover {
+    background: #2a2d2e !important;
+}
+
+.code-view-container.theme-vscode-dark .code-line-row.line-highlighted {
+    background: #37373d !important;
+    border-left: 5px solid #007acc !important;
+    font-weight: 800 !important;
+}
+
+.code-view-container.theme-vscode-dark .hljs-keyword { color: #569cd6 !important; font-weight: 800 !important; }
+.code-view-container.theme-vscode-dark .hljs-string { color: #ce9178 !important; font-weight: 700 !important; }
+.code-view-container.theme-vscode-dark .hljs-comment { color: #6a9955 !important; font-style: italic !important; }
+.code-view-container.theme-vscode-dark .hljs-number { color: #b5cea8 !important; font-weight: 800 !important; }
+.code-view-container.theme-vscode-dark .hljs-function,
+.code-view-container.theme-vscode-dark .hljs-title.function_ { color: #dcdcaa !important; font-weight: 800 !important; }
+.code-view-container.theme-vscode-dark .hljs-type,
+.code-view-container.theme-vscode-dark .hljs-class,
+.code-view-container.theme-vscode-dark .hljs-built_in { color: #4ec9b0 !important; font-weight: 800 !important; }
+.code-view-container.theme-vscode-dark .hljs-params,
+.code-view-container.theme-vscode-dark .hljs-subst { color: #9cdcfe !important; font-weight: 600 !important; }
+
+/* --- Theme 5: 🌙 Standard Developer Dark Theme --- */
 .code-view-container.theme-atom-dark {
     background: #1e222b !important;
     border: 1px solid var(--border-color) !important;
@@ -1170,7 +1291,9 @@ input[type="date"].form-input {
     color: #94a3b8 !important;
 }
 
-.code-view-container.theme-atom-dark pre.code-block {
+.code-view-container.theme-atom-dark pre.code-block,
+.code-view-container.theme-atom-dark pre.code-block code.hljs,
+.code-view-container.theme-atom-dark .line-content {
     background: #1e222b !important;
     color: #abb2bf !important;
 }

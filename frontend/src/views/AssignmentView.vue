@@ -704,29 +704,58 @@
                             class="theme-btn" 
                             :class="{ active: codeThemeMode === 'beam-light' }"
                             @click="setCodeThemeMode('beam-light')"
-                            title="빔프로젝터 발표용 고대비 라이트 테마 (밝고 선명함 - 강력 추천!)"
+                            title="빔프로젝터 발표용 선명한 고대비 라이트 테마 (강력 추천!)"
                           >
-                            💡 빔프로젝터 라이트 (추천)
+                            💡 고대비 라이트 (추천)
                           </button>
                           <button 
                             type="button" 
                             class="theme-btn" 
                             :class="{ active: codeThemeMode === 'beam-dark' }"
                             @click="setCodeThemeMode('beam-dark')"
-                            title="빔프로젝터 발표용 고대비 다크 테마 (칠흑 배경 + 네온 고대비)"
+                            title="빔프로젝터 발표용 칠흑 네온 고대비 다크 테마"
                           >
-                            🕶️ 빔프로젝터 다크
+                            🕶️ 고대비 다크
+                          </button>
+                          <button 
+                            type="button" 
+                            class="theme-btn" 
+                            :class="{ active: codeThemeMode === 'beam-warm' }"
+                            @click="setCodeThemeMode('beam-warm')"
+                            title="부드러운 종이/세피아 톤 고대비 발표 테마"
+                          >
+                            📄 웜 세피아
+                          </button>
+                          <button 
+                            type="button" 
+                            class="theme-btn" 
+                            :class="{ active: codeThemeMode === 'vscode-dark' }"
+                            @click="setCodeThemeMode('vscode-dark')"
+                            title="VS Code 스타일 다크 테마"
+                          >
+                            💻 VS Code
                           </button>
                           <button 
                             type="button" 
                             class="theme-btn" 
                             :class="{ active: codeThemeMode === 'atom-dark' }"
                             @click="setCodeThemeMode('atom-dark')"
-                            title="기본 다크 테마"
+                            title="기본 Atom 다크 테마"
                           >
-                            💻 기본 다크
+                            🌙 Atom
                           </button>
                         </div>
+
+                        <!-- Dynamic Quick Switcher Button -->
+                        <button 
+                          type="button" 
+                          class="theme-btn" 
+                          style="background: #4f46e5; color: #ffffff !important; border-color: #6366f1; padding: 0.25rem 0.65rem;"
+                          @click="toggleLightDarkTheme"
+                          title="라이트 ↔ 다크 테마 동적 반전 전환"
+                        >
+                          🌓 테마 동적 반전
+                        </button>
 
                         <!-- Font Size Scaler -->
                         <div class="font-size-controls" style="display:flex; align-items:center; gap:0.25rem; background:rgba(0,0,0,0.25); padding:0.25rem 0.5rem; border-radius:6px; border:1px solid rgba(255,255,255,0.15);">
@@ -811,9 +840,11 @@ const modalSubmission = ref<any>(null)
 const showModalSummary = ref(false)
 const peerSubmissions = ref<any[]>([])
 
+type CodeThemeMode = 'beam-light' | 'beam-dark' | 'beam-warm' | 'vscode-dark' | 'atom-dark'
+
 // 빔프로젝터 가독성 테마 & 글꼴 크기 & 발표 포인터 상태 관리
-const codeThemeMode = ref<'beam-light' | 'beam-dark' | 'atom-dark'>(
-  (localStorage.getItem('code_projector_theme') as any) || 'beam-light'
+const codeThemeMode = ref<CodeThemeMode>(
+  (localStorage.getItem('code_projector_theme') as CodeThemeMode) || 'beam-light'
 )
 const codeFontSize = ref<number>(
   Number(localStorage.getItem('code_font_size')) || 18
@@ -859,9 +890,17 @@ onUnmounted(() => {
   stopSplitterDrag()
 })
 
-function setCodeThemeMode(mode: 'beam-light' | 'beam-dark' | 'atom-dark') {
+function setCodeThemeMode(mode: CodeThemeMode) {
   codeThemeMode.value = mode
   localStorage.setItem('code_projector_theme', mode)
+}
+
+function toggleLightDarkTheme() {
+  if (codeThemeMode.value === 'beam-light' || codeThemeMode.value === 'beam-warm') {
+    setCodeThemeMode('beam-dark')
+  } else {
+    setCodeThemeMode('beam-light')
+  }
 }
 
 function adjustFontSize(delta: number) {
