@@ -5,7 +5,7 @@
       <div class="split-col left-col">
         <div class="card">
           <div class="card-header">
-            <h3>{{ authStore.isAdmin ? '📅 일자별 문제 목록 (전체)' : '📅 최근 1주일 과제 & 워크샵' }}</h3>
+            <h3>{{ authStore.isAdmin ? '📅 일자별 문제 목록 (전체)' : '📅 일자별 과제 & 워크샵 목록' }}</h3>
           </div>
 
           <!-- Admin Create Problem Accordion -->
@@ -982,13 +982,8 @@ function getFormattedDateOffset(offsetDays: number) {
 }
 
 async function loadProblems() {
-  if (authStore.isAdmin) {
-    // 관리자: 날짜 제한 없이 전체 문제 목록 조회
-    await problemStore.loadAllProblems()
-  } else {
-    // 학생: 최근 1주일
-    await problemStore.loadWeeklyProblems()
-  }
+  // 관리자 및 학생 모두 전체 문제 목록 조회 (학생은 오늘 이후 미래 문제는 백엔드에서 필터링됨)
+  await problemStore.loadAllProblems()
 }
 
 function handleGlobalPaste(e: ClipboardEvent) {

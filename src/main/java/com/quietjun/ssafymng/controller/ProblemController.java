@@ -106,10 +106,11 @@ public class ProblemController {
     @GetMapping("/all")
     public ResponseEntity<List<ProblemDto>> getAllProblems(
             org.springframework.security.core.Authentication authentication) {
+        String currentSno = (authentication != null) ? authentication.getName() : null;
         boolean isAdmin = authentication != null && authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 
-        List<ProblemDto> list = problemService.getAllProblems();
+        List<ProblemDto> list = problemService.getAllProblems(currentSno);
         if (!isAdmin) {
             LocalDate today = LocalDate.now();
             list = list.stream()

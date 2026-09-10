@@ -63,15 +63,29 @@ public class ProblemService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProblemDto> getAllProblems() {
+    public List<ProblemDto> getAllProblems(String currentSno) {
         return problemRepository.findAllByOrderByProblemDateDescCreatedAtDesc()
                 .stream()
                 .map(p -> {
                     ProblemDto dto = p.toDto();
                     dto.setSubmissionCount(submissionRepository.countByProblem(p));
+                    if (currentSno != null && !currentSno.isBlank()) {
+                        var mySubs = submissionRepository.findByStudent_SnoAndProblemOrderBySubmittedAtDesc(currentSno, p);
+                        if (!mySubs.isEmpty()) {
+                            dto.setSubmittedByMe(true);
+                            dto.setMyResultStatus(mySubs.get(0).getResultStatus());
+                        } else {
+                            dto.setSubmittedByMe(false);
+                        }
+                    }
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProblemDto> getAllProblems() {
+        return getAllProblems(null);
     }
 
     @Transactional(readOnly = true)
