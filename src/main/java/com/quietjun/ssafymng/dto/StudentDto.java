@@ -32,6 +32,22 @@ public class StudentDto implements Comparable<StudentDto> {
     private String domain = "여행";
     @Builder.Default
     private boolean cert = true;
+    @Builder.Default
+    private int points = 0;
+    @Builder.Default
+    private int totalPointsEarned = 0;
+    @Builder.Default
+    private String equippedAvatar = "robot";
+    @Builder.Default
+    private String equippedFrame = "none";
+    @Builder.Default
+    private String equippedTheme = "default";
+    @Builder.Default
+    private String equippedTitle = "새싹 개발자";
+    @Builder.Default
+    private String equippedBanner = "banner-default";
+    @Builder.Default
+    private String unlockedItems = "robot,none,default,새싹 개발자,banner-default";
 
     @Override
     public int compareTo(StudentDto o) {
@@ -55,6 +71,14 @@ public class StudentDto implements Comparable<StudentDto> {
                 .passwordChanged(passwordChanged)
                 .domain(domain != null ? domain : "여행")
                 .cert(cert)
+                .points(points)
+                .totalPointsEarned(totalPointsEarned)
+                .equippedAvatar(equippedAvatar != null ? equippedAvatar : "robot")
+                .equippedFrame(equippedFrame != null ? equippedFrame : "none")
+                .equippedTheme(equippedTheme != null ? equippedTheme : "default")
+                .equippedTitle(equippedTitle != null ? equippedTitle : "새싹 개발자")
+                .equippedBanner(equippedBanner != null ? equippedBanner : "banner-default")
+                .unlockedItems(unlockedItems != null ? unlockedItems : "robot,none,default,새싹 개발자,banner-default")
                 .build();
     }
 }

@@ -159,9 +159,30 @@ public class SubmissionService {
         // 학생 해결 카운트 갱신
         long solvedCount = submissionRepository.countByStudent_SnoAndResultStatus(sno, "Pass");
         student.setSolved((int) solvedCount);
+
+        // 게이미피케이션: 과제/워크샵 최초 Pass 시 포인트 지급
+        int earnedPoints = 0;
+        if ("Pass".equalsIgnoreCase(saved.getResultStatus())) {
+            List<Submission> priorSubs = submissionRepository.findByStudentAndProblemOrderBySubmittedAtDesc(student, problem);
+            boolean alreadyPassed = priorSubs.stream()
+                    .anyMatch(s -> !s.getId().equals(saved.getId()) && "Pass".equalsIgnoreCase(s.getResultStatus()));
+
+            if (!alreadyPassed) {
+                boolean isWorkshop = "워크샵".equals(problem.getProblemType());
+                earnedPoints = isWorkshop ? 20 : 10;
+                student.setPoints(student.getPoints() + earnedPoints);
+                student.setTotalPointsEarned(student.getTotalPointsEarned() + earnedPoints);
+                log.info("학생 [{}]에게 문제 [{}] 최초 Pass 포인트 지급: +{}P (현재: {}P)", 
+                        student.getName(), problem.getTitle(), earnedPoints, student.getPoints());
+            }
+        }
+
         studentRepository.save(student);
 
-        return saved.toDto();
+        SubmissionDto dto = saved.toDto();
+        dto.setEarnedPoints(earnedPoints);
+        dto.setCurrentPoints(student.getPoints());
+        return dto;
     }
 
     @Transactional(readOnly = true)

@@ -16,6 +16,8 @@ public interface StudentRepository extends JpaRepository<Student, String> {
 
     List<Student> findByRoleAndEscapeFalse(Role role);
 
+    List<Student> findByRole(Role role);
+
     Optional<Student> findBySnoAndEscapeFalse(String sno);
 
     long countByRole(Role role);

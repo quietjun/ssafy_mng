@@ -110,6 +110,10 @@ public class Submission {
                 .aiKeyIdea(aiKeyIdea)
                 .aiFeedback(aiFeedback)
                 .aiKeywords(aiKeywords)
+                .studentAvatar(student != null ? student.getEquippedAvatar() : "robot")
+                .studentFrame(student != null ? student.getEquippedFrame() : "none")
+                .studentTitle(student != null ? student.getEquippedTitle() : "새싹 개발자")
+                .currentPoints(student != null ? student.getPoints() : 0)
                 .build();
     }
 }

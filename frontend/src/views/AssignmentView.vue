@@ -1,5 +1,69 @@
 <template>
   <div class="assignment-page">
+    <!-- Gamification Highlight Profile Strip Banner with Luxury Banner Skin -->
+    <div v-if="authStore.isAuthenticated" :class="['gamification-profile-strip', 'mb-3', shopStore.currentBannerClass]">
+      <div class="profile-strip-left">
+        <!-- Interactive Avatar with Frame Aura -->
+        <div 
+          class="strip-avatar-container"
+          @click="shopStore.openShop('AVATAR')"
+          title="클릭하여 아바타 및 프로필 오라 꾸미기"
+        >
+          <div :class="['avatar-frame-badge', 'strip-avatar-badge', shopStore.currentFrameClass]">
+            <span class="strip-avatar-emoji">{{ shopStore.currentAvatarIcon }}</span>
+          </div>
+          <span class="avatar-edit-badge" title="아바타 변경">✏️</span>
+        </div>
+
+        <!-- User Info & Equipped Title Badge -->
+        <div class="strip-user-meta">
+          <div class="strip-user-row">
+            <span class="strip-user-name">{{ authStore.isAdmin ? '관리자' : authStore.user?.name }}</span>
+            <span :class="['user-role-tag', { admin: authStore.isAdmin }]">
+              {{ authStore.isAdmin ? '🛡️ 관리자' : authStore.user?.sno }}
+            </span>
+            <!-- Equipped Title Badge (Click to open Title studio) -->
+            <button 
+              type="button"
+              class="strip-title-badge" 
+              @click="shopStore.openShop('TITLE')"
+              title="클릭하여 명예 칭호 변경"
+            >
+              {{ shopStore.currentTitle }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="profile-strip-right">
+        <!-- Interactive Morphing Point & Studio Button -->
+        <button 
+          type="button"
+          class="strip-morph-btn" 
+          @click="shopStore.openShop('AVATAR')"
+          title="클릭하여 커스텀 스튜디오 열기"
+        >
+          <!-- State 1: Normal Point Display -->
+          <div class="btn-state state-point">
+            <span class="point-sparkle">💎</span>
+            <div class="point-info">
+              <span class="point-label">보유 포인트</span>
+              <span class="point-val">{{ (shopStore.profile?.points ?? 0).toLocaleString() }} P</span>
+            </div>
+          </div>
+
+          <!-- State 2: Hover Studio Action State -->
+          <div class="btn-state state-studio">
+            <span class="studio-sparkle">🎨</span>
+            <div class="studio-info">
+              <span class="studio-title">커스텀 스튜디오</span>
+              <span class="studio-hint">스킨 & 꾸미기 열기 ➔</span>
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+
     <div class="content-split">
       <!-- Left: Problem List & Admin Create -->
       <div class="split-col left-col">
@@ -18,6 +82,26 @@
             </button>
 
             <form v-if="isCreating" @submit.prevent="handleCreateProblem" class="sub-form mt-2">
+              <!-- Load Existing Problem Action Bar -->
+              <div class="existing-import-bar mb-2">
+                <span class="existing-import-title">📝 문제 정보 입력</span>
+                <button 
+                  type="button" 
+                  class="btn btn-sm btn-outline existing-import-btn"
+                  @click="openExistingProblemModal"
+                >
+                  📋 기존 문제에서 불러오기
+                </button>
+              </div>
+
+              <!-- Notice when problem loaded from existing list -->
+              <div v-if="loadedFromExistingTitle" class="alert-loaded-notice mb-2">
+                <div class="notice-text">
+                  ✅ <strong>'{{ loadedFromExistingTitle }}'</strong> 내용을 불러왔습니다. 날짜를 확인해 주세요.
+                </div>
+                <button type="button" class="notice-close" @click="loadedFromExistingTitle = ''">&times;</button>
+              </div>
+
               <div class="form-group">
                 <label class="form-label">문제 날짜</label>
                 <input 
@@ -529,8 +613,18 @@
                 <template v-for="s in sortedSubmissions" :key="s.id">
                   <tr :class="{ 'row-expanded': expandedSubmissionId === s.id }">
                     <td style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                      <strong style="color:#f8fafc; font-size:0.9rem;">{{ s.studentName }}</strong>
-                      <span style="color:#94a3b8; font-size:0.78rem; margin-left:3px;">({{ s.studentSno || s.sno }})</span>
+                      <div style="display:flex; align-items:center; gap:0.45rem;">
+                        <div :class="['avatar-frame-badge', getStudentFrameClass(s.studentFrame)]" style="width:26px; height:26px; font-size:0.95rem; background:rgba(0,0,0,0.3); flex-shrink:0;" :title="s.studentTitle || '새싹 개발자'">
+                          {{ getStudentAvatarEmoji(s.studentAvatar) }}
+                        </div>
+                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                          <strong style="color:#f8fafc; font-size:0.88rem;">{{ s.studentName }}</strong>
+                          <span v-if="s.studentTitle" class="badge" style="font-size:0.72rem; padding:0.1rem 0.45rem; margin-left:4px; background:linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.25)); color:#fde047; border:1px solid rgba(245, 158, 11, 0.45); border-radius:999px;">
+                            {{ shopStore.getTitleWithIcon(s.studentTitle) }}
+                          </span>
+                          <span style="color:#94a3b8; font-size:0.75rem; margin-left:3px;">({{ s.studentSno || s.sno }})</span>
+                        </div>
+                      </div>
                     </td>
                     <td style="color:#94a3b8; font-size:0.82rem; text-align:center;">{{ formatShortDateTime(s.submittedAt) }}</td>
                     <td style="text-align:center;"><span class="ai-chip chip-time" style="padding: 0.15rem 0.5rem; font-size: 0.78rem; font-weight:700;">{{ stripUnit(s.executionTime) }}</span></td>
@@ -778,6 +872,118 @@
         </div>
       </div>
     </div>
+
+    <!-- Existing Problems Picker Modal -->
+    <div v-if="showExistingProblemModal" class="modal-overlay" @click.self="showExistingProblemModal = false">
+      <div class="modal existing-problem-modal">
+        <div class="modal-header">
+          <div style="display:flex; align-items:center; gap:0.6rem;">
+            <h3>📋 기존 등록된 문제 불러오기</h3>
+            <span class="badge" style="font-size:0.75rem; background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">
+              이전 기수/과거 문제 재사용
+            </span>
+          </div>
+          <button class="modal-close" @click="showExistingProblemModal = false">&times;</button>
+        </div>
+
+        <div class="modal-body" style="display:flex; flex-direction:column; gap:1rem;">
+          <!-- Filter Controls -->
+          <div class="existing-filter-bar">
+            <!-- Search Input -->
+            <div class="search-input-wrapper" style="flex:1; min-width:200px;">
+              <input 
+                type="text" 
+                v-model="existingSearchQuery" 
+                class="form-input" 
+                placeholder="🔍 문제 제목, 플랫폼, 본문 검색..." 
+                style="padding:0.45rem 0.75rem; font-size:0.85rem;"
+              />
+            </div>
+
+            <!-- Type Filter -->
+            <div class="filter-group">
+              <select v-model="existingTypeFilter" class="form-select" style="font-size:0.85rem; padding:0.45rem 0.75rem;">
+                <option value="ALL">전체 구분</option>
+                <option value="과제">📘 과제</option>
+                <option value="워크샵">🛠️ 워크샵</option>
+              </select>
+            </div>
+
+            <!-- Platform Filter -->
+            <div class="filter-group">
+              <select v-model="existingPlatformFilter" class="form-select" style="font-size:0.85rem; padding:0.45rem 0.75rem;">
+                <option value="ALL">전체 출처</option>
+                <option v-for="plat in availableExistingPlatforms" :key="plat" :value="plat">
+                  {{ plat }}
+                </option>
+              </select>
+            </div>
+
+            <button type="button" class="btn btn-sm btn-outline" @click="loadExistingProblemsList" title="목록 새로고침" style="padding:0.45rem 0.7rem;">
+              🔄
+            </button>
+          </div>
+
+          <!-- Total Count Display -->
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; color:#94a3b8; padding:0 0.2rem;">
+            <span>
+              검색 결과: <strong style="color:#38bdf8;">{{ filteredExistingProblems.length }}</strong>건 (전체 {{ existingProblemsList.length }}건)
+            </span>
+            <span style="font-size:0.78rem;">
+              💡 원하는 문제의 <strong>[이 문제 가져오기]</strong>를 누르면 등록 폼에 자동 입력됩니다.
+            </span>
+          </div>
+
+          <!-- Problem List Container -->
+          <div class="existing-problems-scroll-box">
+            <div v-if="isLoadingExisting" class="empty-state" style="padding:2.5rem 1rem; text-align:center;">
+              ⏳ 기존 문제를 불러오는 중입니다...
+            </div>
+            <div v-else-if="filteredExistingProblems.length === 0" class="empty-state" style="padding:2.5rem 1rem; text-align:center;">
+              조건에 맞는 기존 문제가 없습니다.
+            </div>
+            <div v-else class="existing-problem-cards">
+              <div 
+                v-for="item in filteredExistingProblems" 
+                :key="item.id" 
+                class="existing-problem-card"
+              >
+                <div class="existing-card-main">
+                  <div class="existing-card-meta">
+                    <span :class="['problem-type-badge', item.problemType === '워크샵' ? 'badge-ws' : 'badge-hw']" style="font-size:0.75rem;">
+                      {{ item.problemType || '과제' }}
+                    </span>
+                    <span v-if="item.platformName" class="ai-chip chip-time" style="font-size:0.75rem; padding:0.15rem 0.4rem;">
+                      {{ item.platformName }}
+                    </span>
+                    <span class="existing-date-badge">
+                      📅 {{ item.problemDate }} 등록
+                    </span>
+                  </div>
+
+                  <h4 class="existing-card-title">{{ item.title }}</h4>
+
+                  <p class="existing-card-preview">
+                    {{ getCleanTextPreview(item.description) }}
+                  </p>
+                </div>
+
+                <div class="existing-card-action">
+                  <button 
+                    type="button" 
+                    class="btn btn-sm btn-success" 
+                    style="white-space:nowrap; padding:0.4rem 0.8rem; font-size:0.82rem;"
+                    @click="selectExistingProblem(item)"
+                  >
+                    📥 이 문제 가져오기
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -786,6 +992,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useProblemStore, type ProblemItem } from '@/stores/problems'
+import { useShopStore } from '@/stores/shop'
 import api from '@/utils/api'
 import hljs from 'highlight.js/lib/core'
 import java from 'highlight.js/lib/languages/java'
@@ -796,11 +1003,113 @@ hljs.registerLanguage('java', java)
 const router = useRouter()
 const authStore = useAuthStore()
 const problemStore = useProblemStore()
+const shopStore = useShopStore()
+
+function getStudentAvatarEmoji(avatarId?: string): string {
+  const map: Record<string, string> = {
+    robot: '🤖',
+    cat: '🐱',
+    wizard: '🧙‍♂️',
+    ninja: '🥷',
+    alchemist: '☕',
+    dragon: '🐉'
+  }
+  return (avatarId && map[avatarId]) ? map[avatarId] : '🤖'
+}
+
+function getStudentFrameClass(frameId?: string): string {
+  if (!frameId || frameId === 'none') return 'frame-none'
+  if (frameId.startsWith('frame-')) {
+    const pure = frameId.replace('frame-', '')
+    return `frame-${pure}`
+  }
+  return `frame-${frameId}`
+}
 
 const todayStr = new Date().toISOString().split('T')[0]
 const selectedDate = ref(todayStr)
 const isCreating = ref(false)
 const isEditing = ref(false)
+
+// 기존 문제 불러오기 관련 상태 및 로직
+const showExistingProblemModal = ref(false)
+const existingProblemsList = ref<ProblemItem[]>([])
+const isLoadingExisting = ref(false)
+const existingSearchQuery = ref('')
+const existingTypeFilter = ref<string>('ALL') // 'ALL' | '과제' | '워크샵'
+const existingPlatformFilter = ref<string>('ALL')
+const loadedFromExistingTitle = ref('')
+
+async function openExistingProblemModal() {
+  showExistingProblemModal.value = true
+  existingSearchQuery.value = ''
+  existingTypeFilter.value = 'ALL'
+  existingPlatformFilter.value = 'ALL'
+  await loadExistingProblemsList()
+}
+
+async function loadExistingProblemsList() {
+  isLoadingExisting.value = true
+  try {
+    const { data } = await api.get<ProblemItem[]>('/api/problems/all')
+    existingProblemsList.value = Array.isArray(data) ? data : []
+  } catch (e) {
+    console.error('기존 문제 목록 로드 실패:', e)
+    existingProblemsList.value = []
+  } finally {
+    isLoadingExisting.value = false
+  }
+}
+
+const availableExistingPlatforms = computed(() => {
+  const platforms = new Set<string>()
+  for (const p of existingProblemsList.value) {
+    if (p.platformName && p.platformName.trim()) {
+      platforms.add(p.platformName.trim())
+    }
+  }
+  return Array.from(platforms)
+})
+
+const filteredExistingProblems = computed(() => {
+  let list = existingProblemsList.value
+
+  if (existingTypeFilter.value !== 'ALL') {
+    list = list.filter(p => (p.problemType || '과제') === existingTypeFilter.value)
+  }
+
+  if (existingPlatformFilter.value !== 'ALL') {
+    list = list.filter(p => p.platformName === existingPlatformFilter.value)
+  }
+
+  if (existingSearchQuery.value.trim()) {
+    const q = existingSearchQuery.value.trim().toLowerCase()
+    list = list.filter(p => {
+      const matchTitle = (p.title || '').toLowerCase().includes(q)
+      const matchPlatform = (p.platformName || '').toLowerCase().includes(q)
+      const matchDesc = (p.description || '').toLowerCase().includes(q)
+      return matchTitle || matchPlatform || matchDesc
+    })
+  }
+
+  return list
+})
+
+function getCleanTextPreview(html?: string): string {
+  if (!html) return '문제 설명이 없습니다.'
+  const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  return text.length > 140 ? text.substring(0, 140) + '...' : text || '문제 설명이 없습니다.'
+}
+
+function selectExistingProblem(p: ProblemItem) {
+  newProblem.value.title = p.title
+  newProblem.value.problemType = (p.problemType as '과제' | '워크샵') || '과제'
+  newProblem.value.platformName = p.platformName || ''
+  newProblem.value.description = p.description || ''
+
+  loadedFromExistingTitle.value = p.title
+  showExistingProblemModal.value = false
+}
 
 // 2-Step Workflow State
 const submissionStep = ref<1 | 2>(1)
@@ -1034,6 +1343,8 @@ onMounted(async () => {
   if (problemStore.selectedProblem) {
     await loadPeerSubmissions()
   }
+  shopStore.loadProfile()
+  shopStore.loadCatalog()
 })
 
 onUnmounted(() => {
@@ -1442,8 +1753,13 @@ async function handleFinalSubmit() {
   }
 
   try {
-    await api.post('/api/submissions', payload)
-    alert('🎉 과제가 성공적으로 최종 제출되었습니다!')
+    const { data } = await api.post<any>('/api/submissions', payload)
+    if (data?.earnedPoints && data.earnedPoints > 0) {
+      alert(`🎉 [문제 해결 성공!]\n🪙 +${data.earnedPoints}P를 획득하셨습니다! (현재 보유: ${data.currentPoints}P)\n상단 포인트 스튜디오에서 캐릭터와 테마를 꾸며보세요!`)
+      await shopStore.loadProfile()
+    } else {
+      alert('🎉 풀이가 성공적으로 최종 제출되었습니다!')
+    }
     submissionStep.value = 1
     sourceCode.value = ''
     attachedFileName.value = ''
@@ -1549,5 +1865,440 @@ function copyCode() {
 .peer-table tr.row-expanded td {
   background: rgba(99, 102, 241, 0.08);
   border-bottom-color: transparent;
+}
+
+/* 기존 문제 불러오기 상단 바 & 안내 배너 */
+.existing-import-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.existing-import-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.existing-import-btn {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.65rem;
+  border-color: #38bdf8;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  transition: all 0.2s ease;
+}
+
+.existing-import-btn:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #7dd3fc;
+  color: #ffffff;
+}
+
+.alert-loaded-notice {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 6px;
+  color: #6ee7b7;
+  font-size: 0.82rem;
+}
+
+.alert-loaded-notice .notice-text {
+  line-height: 1.4;
+}
+
+.alert-loaded-notice .notice-close {
+  background: none;
+  border: none;
+  color: #6ee7b7;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0.2rem;
+}
+
+/* 기존 문제 선택 모달 */
+.existing-problem-modal {
+  max-width: 840px;
+  width: 95%;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.existing-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.existing-problems-scroll-box {
+  overflow-y: auto;
+  max-height: 520px;
+  padding-right: 0.35rem;
+}
+
+.existing-problem-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.existing-problem-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(30, 41, 59, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  transition: all 0.2s ease;
+}
+
+.existing-problem-card:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.existing-card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.existing-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.existing-date-badge {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.existing-card-title {
+  margin: 0 0 0.3rem 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.4;
+}
+
+.existing-card-preview {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.existing-card-action {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .existing-problem-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .existing-card-action {
+    width: 100%;
+  }
+  .existing-card-action button {
+    width: 100%;
+  }
+}
+
+/* ========================================================
+   Gamification Highlight Profile Strip Banner
+   ======================================================== */
+.gamification-profile-strip {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-surface) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.1rem 1.4rem;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.gamification-profile-strip::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc, #fbbf24);
+}
+
+.profile-strip-left {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex: 1;
+  min-width: 280px;
+}
+
+.strip-avatar-container {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.strip-avatar-container:hover {
+  transform: scale(1.08);
+}
+
+.strip-avatar-badge {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.6);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.strip-avatar-emoji {
+  font-size: 2.1rem;
+  line-height: 1;
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  background: #6366f1;
+  color: #fff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0f172a;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.strip-user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.strip-user-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.strip-user-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.3px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+}
+
+.strip-title-badge {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.25), rgba(245, 158, 11, 0.35));
+  border: 1px solid rgba(245, 158, 11, 0.6);
+  color: #fde047;
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.strip-title-badge:hover {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.4), rgba(245, 158, 11, 0.55));
+  border-color: #fbbf24;
+  transform: translateY(-1px);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.5);
+}
+
+.strip-user-desc {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+.profile-strip-right {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+/* Interactive Morphing Point & Studio Button */
+.strip-morph-btn {
+  position: relative;
+  height: 50px;
+  min-width: 185px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22) 0%, rgba(168, 85, 247, 0.26) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-sizing: border-box;
+}
+
+.strip-morph-btn:hover {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.55);
+}
+
+.btn-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  padding: 0 1.25rem;
+  transition: all 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-sizing: border-box;
+}
+
+.state-point {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.state-studio {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.strip-morph-btn:hover .state-point {
+  opacity: 0;
+  transform: translateY(-24px);
+}
+
+.strip-morph-btn:hover .state-studio {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.point-sparkle,
+.studio-sparkle {
+  font-size: 1.35rem;
+  line-height: 1;
+  animation: float-sparkle 2s ease-in-out infinite alternate;
+}
+
+@keyframes float-sparkle {
+  0% { transform: translateY(0) scale(1); }
+  100% { transform: translateY(-2px) scale(1.1); }
+}
+
+.point-info,
+.studio-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
+}
+
+.point-label {
+  font-size: 0.7rem;
+  color: #c4b5fd;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+}
+
+.point-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  line-height: 1.2;
+}
+
+.studio-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.studio-hint {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .gamification-profile-strip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .profile-strip-right {
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-strip-right {
+    width: 100%;
+  }
+  .strip-morph-btn {
+    width: 100%;
+  }
 }
 </style>

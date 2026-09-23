@@ -53,17 +53,23 @@
         </form>
       </div>
     </div>
+
+    <!-- Point Shop & Custom Studio Modal -->
+    <PointShopModal />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useShopStore } from '@/stores/shop'
 import Navbar from '@/components/Navbar.vue'
 import GlobalLoading from '@/components/GlobalLoading.vue'
+import PointShopModal from '@/components/PointShopModal.vue'
 import api from '@/utils/api'
 
 const authStore = useAuthStore()
+const shopStore = useShopStore()
 const isPasswordModalOpen = ref(false)
 const oldPassword = ref('')
 const newPassword = ref('')
@@ -72,7 +78,11 @@ const pwError = ref('')
 const isChangingPw = ref(false)
 
 onMounted(async () => {
+  shopStore.applyTheme()
   await authStore.checkAuth()
+  if (authStore.isAuthenticated) {
+    await shopStore.loadProfile()
+  }
 })
 
 async function handleChangePassword() {

@@ -31,26 +31,29 @@
             <table class="data-table">
               <thead>
                 <tr>
-                  <th style="width: 22%; cursor: pointer; user-select: none;" @click="toggleSort('sno')" title="학번순 정렬">
+                  <th style="width: 20%; cursor: pointer; user-select: none;" @click="toggleSort('sno')" title="학번순 정렬">
                     학번 <span style="font-size:0.72rem; opacity:0.8;">{{ getSortIcon('sno') }}</span>
                   </th>
-                  <th style="width: 16%; cursor: pointer; user-select: none;" @click="toggleSort('name')" title="이름순 정렬">
+                  <th style="width: 15%; cursor: pointer; user-select: none;" @click="toggleSort('name')" title="이름순 정렬">
                     이름 <span style="font-size:0.72rem; opacity:0.8;">{{ getSortIcon('name') }}</span>
                   </th>
-                  <th style="width: 20%; text-align:center; cursor: pointer; user-select: none;" @click="toggleSort('totalExamScore')" title="시험 총점순 정렬">
+                  <th style="width: 17%; text-align:center; cursor: pointer; user-select: none;" @click="toggleSort('totalExamScore')" title="시험 총점순 정렬">
                     시험 총점 <span style="font-size:0.72rem; opacity:0.8;">{{ getSortIcon('totalExamScore') }}</span>
                   </th>
-                  <th style="width: 18%; text-align:center; cursor: pointer; user-select: none;" @click="toggleSort('presentationPoint')" title="발표 레벨순 정렬">
+                  <th style="width: 14%; text-align:center; cursor: pointer; user-select: none;" @click="toggleSort('presentationPoint')" title="발표 레벨순 정렬">
                     발표 Lv <span style="font-size:0.72rem; opacity:0.8;">{{ getSortIcon('presentationPoint') }}</span>
                   </th>
-                  <th style="width: 24%; text-align:center; cursor: pointer; user-select: none;" @click="toggleSort('passwordChanged')" title="비번 상태순 정렬">
+                  <th style="width: 18%; text-align:center; cursor: pointer; user-select: none;" @click="toggleSort('points')" title="보유 포인트순 정렬">
+                    보유 포인트 <span style="font-size:0.72rem; opacity:0.8;">{{ getSortIcon('points') }}</span>
+                  </th>
+                  <th style="width: 16%; text-align:center; cursor: pointer; user-select: none;" @click="toggleSort('passwordChanged')" title="비번 상태순 정렬">
                     비번 상태 <span style="font-size:0.72rem; opacity:0.8;">{{ getSortIcon('passwordChanged') }}</span>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-if="filteredStudents.length === 0">
-                  <td colspan="5" style="text-align:center; padding: 2rem;" class="empty-state">
+                  <td colspan="6" style="text-align:center; padding: 2rem;" class="empty-state">
                     {{ searchQuery ? '검색 결과와 일치하는 학생이 없습니다.' : '등록된 학생이 없습니다.' }}
                   </td>
                 </tr>
@@ -71,6 +74,11 @@
                   <td style="text-align:center;">
                     <span class="ai-chip chip-complexity" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">
                       Lv.{{ s.presentationPoint || 1 }}
+                    </span>
+                  </td>
+                  <td style="text-align:center;">
+                    <span class="ai-chip" style="padding: 0.15rem 0.5rem; font-size: 0.78rem; font-weight:700; background:rgba(251, 191, 36, 0.15); color:#fbbf24; border:1px solid rgba(251, 191, 36, 0.35);">
+                      🪙 {{ (s.points ?? 0).toLocaleString() }}P
                     </span>
                   </td>
                   <td style="text-align:center;">
@@ -108,7 +116,7 @@
 
           <template v-if="selectedStudent">
             <!-- Stats Summary Cards -->
-            <div class="stats-row mb-3" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:0.5rem;">
+            <div class="stats-row mb-3" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:0.5rem;">
               <div class="stat-card">
                 <div class="stat-num" style="color:var(--info);">{{ studentExamScores.length }}회</div>
                 <div class="stat-label">응시 시험 수</div>
@@ -124,6 +132,10 @@
               <div class="stat-card">
                 <div class="stat-num" style="color:var(--warning);">{{ selectedStudent.solved || 0 }}개</div>
                 <div class="stat-label">알고리즘 해결 수</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-num" style="color:#fbbf24;">🪙 {{ (selectedStudent.points ?? 0).toLocaleString() }}P</div>
+                <div class="stat-label">보유 포인트 (누적 {{ (selectedStudent.totalPointsEarned ?? 0).toLocaleString() }}P)</div>
               </div>
             </div>
 
@@ -142,6 +154,13 @@
                   <strong style="color:#f8fafc;">{{ selectedStudent.name }}</strong>
                 </div>
                 <div>
+                  <span style="color:var(--text-muted); display:block;">보유 / 누적 포인트</span>
+                  <strong style="color:#fbbf24; display:inline-flex; align-items:center; gap:0.25rem;">
+                    🪙 {{ (selectedStudent.points ?? 0).toLocaleString() }} P
+                    <span style="font-size:0.75rem; color:#94a3b8; font-weight:normal;">(누적 {{ (selectedStudent.totalPointsEarned ?? 0).toLocaleString() }}P)</span>
+                  </strong>
+                </div>
+                <div>
                   <span style="color:var(--text-muted); display:block;">프로젝트 도메인</span>
                   <strong style="color:#f8fafc;">{{ selectedStudent.domain || '여행' }}</strong>
                 </div>
@@ -149,6 +168,12 @@
                   <span style="color:var(--text-muted); display:block;">A 형 취득 여부</span>
                   <span :class="['ai-chip', selectedStudent.cert !== false ? 'chip-pass' : 'chip-fail']" style="padding:0.1rem 0.45rem; font-size:0.75rem;">
                     {{ selectedStudent.cert !== false ? '✅ 취득 (True)' : '❌ 미취득 (False)' }}
+                  </span>
+                </div>
+                <div>
+                  <span style="color:var(--text-muted); display:block;">착용 칭호</span>
+                  <span style="font-size:0.75rem; font-weight:700; background:rgba(99, 102, 241, 0.2); color:#a5b4fc; border:1px solid rgba(99, 102, 241, 0.4); padding:0.12rem 0.5rem; border-radius:12px; display:inline-block;">
+                    {{ selectedStudent.equippedTitle || '새싹 개발자' }}
                   </span>
                 </div>
                 <div>
@@ -370,6 +395,13 @@ interface StudentItem {
   totalExamScore?: number
   domain?: string
   cert?: boolean
+  points?: number
+  totalPointsEarned?: number
+  equippedAvatar?: string
+  equippedFrame?: string
+  equippedTheme?: string
+  equippedTitle?: string
+  equippedBanner?: string
 }
 
 interface ExamScoreItem {
@@ -472,6 +504,9 @@ const filteredStudents = computed(() => {
     } else if (sortKey.value === 'presentationPoint') {
       valA = valA != null ? Number(valA) : 1
       valB = valB != null ? Number(valB) : 1
+    } else if (sortKey.value === 'points') {
+      valA = valA != null ? Number(valA) : 0
+      valB = valB != null ? Number(valB) : 0
     } else if (sortKey.value === 'passwordChanged') {
       valA = a.passwordChanged ? 1 : 0
       valB = b.passwordChanged ? 1 : 0
@@ -505,7 +540,7 @@ function toggleSort(key: string) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortKey.value = key
-    sortOrder.value = (key === 'totalExamScore' || key === 'presentationPoint') ? 'desc' : 'asc'
+    sortOrder.value = (key === 'totalExamScore' || key === 'presentationPoint' || key === 'points') ? 'desc' : 'asc'
   }
 }
 

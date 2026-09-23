@@ -153,7 +153,18 @@
         </div>
         <div class="modal-body py-4">
           <div class="winner-trophy">🏆</div>
-          <h1 class="winner-display-name my-3">{{ winner.name }} ({{ winner.sno }})</h1>
+
+          <!-- Winner Avatar & Title Display -->
+          <div style="display:flex; flex-direction:column; align-items:center; gap:0.4rem; margin: 1rem 0;">
+            <div :class="['avatar-frame-badge', getSpeakerFrameClass(winner.equippedFrame)]" style="width:76px; height:76px; font-size:2.8rem; background:rgba(0,0,0,0.35);">
+              {{ getSpeakerAvatar(winner.equippedAvatar) }}
+            </div>
+            <span v-if="winner.equippedTitle" class="badge" style="font-size:0.85rem; padding:0.2rem 0.6rem; background:linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.25)); color:#fde047; border:1px solid rgba(245, 158, 11, 0.45); border-radius:999px;">
+              {{ shopStore.getTitleWithIcon(winner.equippedTitle) }}
+            </span>
+          </div>
+
+          <h1 class="winner-display-name my-2">{{ winner.name }} ({{ winner.sno }})</h1>
           <p style="color:var(--text-muted);">발표 점수 레벨이 상승했습니다! 👏</p>
           <button class="btn btn-primary btn-lg mt-3" @click="winner = null">확인</button>
         </div>
@@ -166,10 +177,12 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useShopStore } from '@/stores/shop'
 import api from '@/utils/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const shopStore = useShopStore()
 
 interface StudentSeat {
   sno: string
@@ -177,6 +190,27 @@ interface StudentSeat {
   srow: number
   scol: number
   presentationPoint?: number
+  equippedAvatar?: string
+  equippedFrame?: string
+  equippedTitle?: string
+}
+
+function getSpeakerAvatar(avatarId?: string): string {
+  const map: Record<string, string> = {
+    robot: '🤖',
+    cat: '🐱',
+    wizard: '🧙‍♂️',
+    ninja: '🥷',
+    alchemist: '☕',
+    dragon: '🐉'
+  }
+  return (avatarId && map[avatarId]) ? map[avatarId] : '🤖'
+}
+
+function getSpeakerFrameClass(frameId?: string): string {
+  if (!frameId || frameId === 'none') return 'frame-none'
+  const pure = frameId.replace('frame-', '')
+  return `frame-${pure}`
 }
 
 const rows = ref(5)

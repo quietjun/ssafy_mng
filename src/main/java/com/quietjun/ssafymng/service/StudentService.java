@@ -45,8 +45,20 @@ public class StudentService {
                     .role(Role.ROLE_ADMIN)
                     .passwordChanged(true)
                     .presentationPoint(1)
+                    .points(1000000)
+                    .totalPointsEarned(1000000)
                     .build();
             studentRepository.save(admin);
+        } else {
+            // 기존 관리자 계정에 최초 1회 1,000,000 테스트 포인트 지급
+            studentRepository.findByRole(Role.ROLE_ADMIN).forEach(admin -> {
+                if (admin.getPoints() == 0 && admin.getTotalPointsEarned() == 0) {
+                    admin.setPoints(1000000);
+                    admin.setTotalPointsEarned(1000000);
+                    studentRepository.save(admin);
+                    log.info("관리자 [{}] 계정에 테스트 포인트 1,000,000P를 지급했습니다.", admin.getSno());
+                }
+            });
         }
     }
 

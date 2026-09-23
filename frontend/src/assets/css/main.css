@@ -11,11 +11,419 @@
     --info: #38bdf8;
     --text-main: #f8fafc;
     --text-muted: #94a3b8;
+    --bg-glow: rgba(99, 102, 241, 0.12);
     --radius-sm: 6px;
     --radius-md: 10px;
     --radius-lg: 14px;
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+}
+
+/* Custom Gamification Themes */
+[data-theme="cyberpunk"] {
+    --bg-main: #070814;
+    --bg-card: #111227;
+    --bg-surface: #1d1845;
+    --border-color: #432b75;
+    --primary: #ec4899;
+    --primary-hover: #db2777;
+    --info: #06b6d4;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --text-main: #fdf4ff;
+    --text-muted: #c4b5fd;
+    --bg-glow: rgba(236, 72, 153, 0.22);
+}
+
+[data-theme="matrix"] {
+    --bg-main: #030a05;
+    --bg-card: #08170c;
+    --bg-surface: #0c2b15;
+    --border-color: #164e28;
+    --primary: #10b981;
+    --primary-hover: #059669;
+    --info: #34d399;
+    --text-main: #ecfdf5;
+    --text-muted: #6ee7b7;
+    --bg-glow: rgba(16, 185, 129, 0.22);
+}
+
+[data-theme="midnight"] {
+    --bg-main: #120e0a;
+    --bg-card: #1c1610;
+    --bg-surface: #2b2016;
+    --border-color: #4a3420;
+    --primary: #f59e0b;
+    --primary-hover: #d97706;
+    --info: #38bdf8;
+    --text-main: #fef3c7;
+    --text-muted: #fde68a;
+    --bg-glow: rgba(245, 158, 11, 0.2);
+}
+
+[data-theme="retro"] {
+    --bg-main: #0f061b;
+    --bg-card: #1a0a2e;
+    --bg-surface: #2c124d;
+    --border-color: #4f1d7a;
+    --primary: #a855f7;
+    --primary-hover: #9333ea;
+    --info: #38bdf8;
+    --warning: #eab308;
+    --text-main: #faf5ff;
+    --text-muted: #d8b4fe;
+    --bg-glow: rgba(168, 85, 247, 0.22);
+}
+
+[data-theme="aurora"] {
+    --bg-main: #070b20;
+    --bg-card: #0e1538;
+    --bg-surface: #172254;
+    --border-color: #26387a;
+    --primary: #38bdf8;
+    --primary-hover: #0284c7;
+    --info: #818cf8;
+    --text-main: #f0fdf4;
+    --text-muted: #7dd3fc;
+    --bg-glow: rgba(56, 189, 248, 0.22);
+}
+
+/* Avatar Frame Styles (Vibrant Glow Aura) */
+.avatar-frame-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.avatar-frame-badge.frame-none,
+.frame-none {
+    border: 2px dashed rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* 1. 사이버 시안 네온 오라 (Frame Cyan) */
+.avatar-frame-badge.frame-cyan,
+.avatar-frame-badge.frame-neon-cyan,
+.frame-cyan,
+.frame-neon-cyan {
+    border: 3px solid #38bdf8 !important;
+    background: radial-gradient(circle, rgba(56, 189, 248, 0.4) 0%, rgba(56, 189, 248, 0.1) 60%, transparent 80%) !important;
+    box-shadow: 0 0 15px #38bdf8, 0 0 30px rgba(56, 189, 248, 0.8), 0 0 50px rgba(56, 189, 248, 0.4), inset 0 0 10px #38bdf8 !important;
+    animation: pulse-frame-cyan 1.4s infinite alternate ease-in-out !important;
+}
+
+/* 2. RGB 오로라 글로우 (Frame Purple) */
+.avatar-frame-badge.frame-purple,
+.avatar-frame-badge.frame-neon-purple,
+.frame-purple,
+.frame-neon-purple {
+    border: 3px solid #c084fc !important;
+    background: radial-gradient(circle, rgba(192, 132, 252, 0.45) 0%, rgba(168, 85, 247, 0.15) 60%, transparent 80%) !important;
+    box-shadow: 0 0 18px #c084fc, 0 0 35px rgba(168, 85, 247, 0.9), 0 0 55px rgba(232, 121, 249, 0.5), inset 0 0 12px #e879f9 !important;
+    animation: pulse-frame-purple 1.6s infinite alternate ease-in-out !important;
+}
+
+/* 3. 챔피언 골드 플레임 (Frame Gold) */
+.avatar-frame-badge.frame-gold,
+.avatar-frame-badge.frame-fire-gold,
+.frame-gold,
+.frame-fire-gold {
+    border: 3px solid #fbbf24 !important;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, rgba(245, 158, 11, 0.2) 60%, transparent 80%) !important;
+    box-shadow: 0 0 20px #fbbf24, 0 0 40px rgba(245, 158, 11, 0.95), 0 0 60px rgba(254, 240, 138, 0.6), inset 0 0 14px #fef08a !important;
+    animation: pulse-frame-gold 1.2s infinite alternate ease-in-out !important;
+}
+
+@keyframes pulse-frame-cyan {
+    0% {
+        box-shadow: 0 0 10px #38bdf8, 0 0 20px rgba(56, 189, 248, 0.6), inset 0 0 6px #38bdf8;
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 0 0 22px #38bdf8, 0 0 42px rgba(56, 189, 248, 1), 0 0 65px rgba(56, 189, 248, 0.5), inset 0 0 14px #38bdf8;
+        transform: scale(1.06);
+    }
+}
+
+@keyframes pulse-frame-purple {
+    0% {
+        box-shadow: 0 0 12px #c084fc, 0 0 24px rgba(192, 132, 252, 0.7), inset 0 0 8px #c084fc;
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 0 0 26px #c084fc, 0 0 48px rgba(168, 85, 247, 1), 0 0 70px rgba(244, 114, 182, 0.6), inset 0 0 16px #f472b6;
+        transform: scale(1.06);
+    }
+}
+
+@keyframes pulse-frame-gold {
+    0% {
+        box-shadow: 0 0 14px #fbbf24, 0 0 28px rgba(251, 191, 36, 0.7), inset 0 0 10px #fbbf24;
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: 0 0 28px #fbbf24, 0 0 52px rgba(245, 158, 11, 1), 0 0 80px rgba(254, 240, 138, 0.7), inset 0 0 18px #fef08a;
+        transform: scale(1.08);
+    }
+}
+
+/* ========================================================
+   Luxury Fashion House Profile Banner Skins
+   ======================================================== */
+.banner-default {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-surface) 100%) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* 1. Louis Vuitton Motif - Classic Monogram Le Brown */
+.banner-louis-monogram {
+    background-color: #180e09 !important;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(202, 138, 4, 0.35) 1.5px, transparent 2.5px),
+        radial-gradient(circle at 0% 0%, rgba(202, 138, 4, 0.25) 2px, transparent 3px),
+        radial-gradient(circle at 100% 100%, rgba(202, 138, 4, 0.25) 2px, transparent 3px),
+        linear-gradient(45deg, rgba(202, 138, 4, 0.12) 25%, transparent 25%, transparent 75%, rgba(202, 138, 4, 0.12) 75%),
+        linear-gradient(-45deg, rgba(202, 138, 4, 0.12) 25%, transparent 25%, transparent 75%, rgba(202, 138, 4, 0.12) 75%),
+        linear-gradient(90deg, rgba(18, 10, 6, 0.88) 0%, rgba(32, 18, 11, 0.72) 50%, rgba(18, 10, 6, 0.88) 100%) !important;
+    background-size: 32px 32px, 32px 32px, 32px 32px, 32px 32px, 32px 32px, 100% 100% !important;
+    border-color: rgba(202, 138, 4, 0.55) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.65), inset 0 0 25px rgba(202, 138, 4, 0.15) !important;
+}
+
+/* 2. Gucci Motif - Signature Red & Green Web Stripe */
+.banner-gucci-stripe {
+    background-color: #0c0e11 !important;
+    background-image: 
+        linear-gradient(90deg, 
+            transparent 0%, transparent 66%, 
+            rgba(13, 56, 30, 0.85) 66%, rgba(13, 56, 30, 0.85) 72%, 
+            rgba(185, 28, 28, 0.95) 72%, rgba(185, 28, 28, 0.95) 80%, 
+            rgba(13, 56, 30, 0.85) 80%, rgba(13, 56, 30, 0.85) 86%, 
+            transparent 86%, transparent 100%),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 2px, transparent 2px, transparent 8px),
+        linear-gradient(135deg, rgba(10, 12, 15, 0.92) 0%, rgba(18, 22, 28, 0.82) 100%) !important;
+    border-color: rgba(185, 28, 28, 0.55) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.65), inset 0 0 25px rgba(13, 56, 30, 0.25) !important;
+}
+
+/* 3. Burberry Motif - Heritage London Nova Check */
+.banner-burberry-check {
+    background-color: #261b12 !important;
+    background-image: 
+        repeating-linear-gradient(0deg, transparent, transparent 38px, rgba(239, 68, 68, 0.28) 38px, rgba(239, 68, 68, 0.28) 41px, transparent 41px, transparent 76px),
+        repeating-linear-gradient(90deg, transparent, transparent 38px, rgba(239, 68, 68, 0.28) 38px, rgba(239, 68, 68, 0.28) 41px, transparent 41px, transparent 76px),
+        repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.4) 0px, rgba(0, 0, 0, 0.4) 15px, transparent 15px, transparent 30px),
+        repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.4) 0px, rgba(0, 0, 0, 0.4) 15px, transparent 15px, transparent 30px),
+        linear-gradient(135deg, rgba(26, 17, 11, 0.9) 0%, rgba(46, 31, 20, 0.78) 100%) !important;
+    border-color: rgba(217, 119, 6, 0.5) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.65), inset 0 0 25px rgba(217, 119, 6, 0.18) !important;
+}
+
+/* 4. Goyard Motif - Parisian Chevron Y-Dot */
+.banner-goyard-chevron {
+    background-color: #0b0c10 !important;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.25) 1px, transparent 1.6px),
+        radial-gradient(circle at 25% 25%, rgba(217, 119, 6, 0.3) 1.5px, transparent 2.2px),
+        radial-gradient(circle at 75% 75%, rgba(217, 119, 6, 0.3) 1.5px, transparent 2.2px),
+        repeating-linear-gradient(60deg, transparent 0, transparent 11px, rgba(255, 255, 255, 0.05) 11px, rgba(255, 255, 255, 0.05) 13px),
+        repeating-linear-gradient(-60deg, transparent 0, transparent 11px, rgba(255, 255, 255, 0.05) 11px, rgba(255, 255, 255, 0.05) 13px),
+        linear-gradient(135deg, rgba(8, 9, 13, 0.92) 0%, rgba(17, 19, 26, 0.82) 100%) !important;
+    background-size: 20px 20px, 20px 20px, 20px 20px, auto, auto, auto !important;
+    border-color: rgba(217, 119, 6, 0.45) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.65), inset 0 0 25px rgba(217, 119, 6, 0.12) !important;
+}
+
+/* 5. Chanel Motif - Timeless Black Quilted */
+.banner-chanel-quilted {
+    background-color: #08080b !important;
+    background-image: 
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.09) 0, rgba(255, 255, 255, 0.09) 1px, transparent 1px, transparent 26px),
+        repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.09) 0, rgba(255, 255, 255, 0.09) 1px, transparent 1px, transparent 26px),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 65%),
+        linear-gradient(135deg, rgba(10, 10, 13, 0.94) 0%, rgba(24, 24, 28, 0.82) 100%) !important;
+    border-color: rgba(255, 255, 255, 0.38) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7), inset 0 0 35px rgba(0, 0, 0, 0.85) !important;
+}
+
+/* 6. Dior Motif - Oblique Luxury Navy */
+.banner-dior-oblique {
+    background-color: #080e22 !important;
+    background-image: 
+        repeating-linear-gradient(135deg, rgba(226, 232, 240, 0.11) 0px, rgba(226, 232, 240, 0.11) 2px, transparent 2px, transparent 18px),
+        repeating-linear-gradient(45deg, rgba(56, 189, 248, 0.09) 0px, rgba(56, 189, 248, 0.09) 1px, transparent 1px, transparent 18px),
+        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.22) 0%, transparent 55%),
+        linear-gradient(135deg, rgba(5, 10, 22, 0.93) 0%, rgba(14, 24, 52, 0.82) 100%) !important;
+    border-color: rgba(129, 140, 248, 0.5) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.65), inset 0 0 25px rgba(56, 189, 248, 0.15) !important;
+}
+
+/* 7. Louis Vuitton Motif - Damier Azur White (Summer Edition) */
+.banner-louis-azur {
+    background-color: #dcd7cc !important;
+    background-image: 
+        linear-gradient(45deg, rgba(82, 97, 115, 0.28) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(82, 97, 115, 0.28) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(82, 97, 115, 0.28) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(82, 97, 115, 0.28) 75%),
+        repeating-linear-gradient(0deg, rgba(202, 138, 4, 0.18) 0px, rgba(202, 138, 4, 0.18) 1px, transparent 1px, transparent 24px),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.45) 0%, rgba(15, 23, 42, 0.28) 50%, rgba(15, 23, 42, 0.48) 100%) !important;
+    background-size: 24px 24px, 24px 24px, 24px 24px, 24px 24px, 24px 24px, 100% 100% !important;
+    border-color: rgba(203, 178, 121, 0.8) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 0 25px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 8. Hermès Motif - Signature Orange & Saddle Gold */
+.banner-hermes-orange {
+    background-color: #e65100 !important;
+    background-image: 
+        repeating-linear-gradient(90deg, transparent 0, transparent 38px, rgba(254, 240, 138, 0.35) 38px, rgba(254, 240, 138, 0.35) 40px),
+        repeating-linear-gradient(0deg, transparent 0, transparent 38px, rgba(254, 240, 138, 0.2) 38px, rgba(254, 240, 138, 0.2) 39px),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.18) 1px, transparent 2px),
+        linear-gradient(135deg, rgba(249, 115, 22, 0.95) 0%, rgba(194, 65, 12, 0.88) 100%) !important;
+    background-size: auto, auto, 16px 16px, 100% 100% !important;
+    border-color: rgba(253, 224, 71, 0.75) !important;
+    box-shadow: 0 10px 30px -5px rgba(230, 81, 0, 0.45), inset 0 0 30px rgba(254, 240, 138, 0.25) !important;
+}
+
+/* 9. Tiffany & Co. Motif - Robins Egg Aqua Mint */
+.banner-tiffany-blue {
+    background-color: #00a89d !important;
+    background-image: 
+        linear-gradient(90deg, transparent 0%, transparent 68%, rgba(255, 255, 255, 0.9) 68%, rgba(255, 255, 255, 0.9) 74%, transparent 74%, transparent 100%),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.12) 0px, rgba(255, 255, 255, 0.12) 2px, transparent 2px, transparent 14px),
+        radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.4) 0%, transparent 65%),
+        linear-gradient(135deg, rgba(45, 212, 191, 0.95) 0%, rgba(13, 148, 136, 0.88) 100%) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
+    box-shadow: 0 10px 30px -5px rgba(13, 148, 136, 0.45), inset 0 0 30px rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 10. Dior Motif - Toile de Jouy Blanc */
+.banner-dior-toile {
+    background-color: #f1ede4 !important;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(30, 58, 138, 0.22) 1.5px, transparent 2.5px),
+        repeating-linear-gradient(60deg, rgba(30, 58, 138, 0.12) 0, rgba(30, 58, 138, 0.12) 1px, transparent 1px, transparent 16px),
+        repeating-linear-gradient(-60deg, rgba(30, 58, 138, 0.12) 0, rgba(30, 58, 138, 0.12) 1px, transparent 1px, transparent 16px),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.25) 50%, rgba(15, 23, 42, 0.45) 100%) !important;
+    background-size: 20px 20px, auto, auto, 100% 100% !important;
+    border-color: rgba(59, 130, 246, 0.6) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45), inset 0 0 25px rgba(255, 255, 255, 0.35) !important;
+}
+
+/* 11. Chanel Motif - Cruise Pastel Pink Tweed */
+.banner-chanel-tweed {
+    background-color: #fce7f3 !important;
+    background-image: 
+        repeating-linear-gradient(0deg, rgba(236, 72, 153, 0.25) 0px, rgba(236, 72, 153, 0.25) 2px, transparent 2px, transparent 14px),
+        repeating-linear-gradient(90deg, rgba(244, 114, 182, 0.25) 0px, rgba(244, 114, 182, 0.25) 2px, transparent 2px, transparent 14px),
+        repeating-linear-gradient(45deg, rgba(251, 191, 36, 0.2) 0px, rgba(251, 191, 36, 0.2) 1px, transparent 1px, transparent 10px),
+        linear-gradient(135deg, rgba(30, 10, 25, 0.4) 0%, rgba(30, 10, 25, 0.22) 50%, rgba(30, 10, 25, 0.42) 100%) !important;
+    border-color: rgba(244, 114, 182, 0.75) !important;
+    box-shadow: 0 10px 30px -5px rgba(236, 72, 153, 0.35), inset 0 0 25px rgba(255, 255, 255, 0.45) !important;
+}
+
+/* 12. Goyard Motif - Goyardine Blanc Pure White */
+.banner-goyard-blanc {
+    background-color: #eae7df !important;
+    background-image: 
+        radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.4) 1.2px, transparent 1.8px),
+        radial-gradient(circle at 25% 25%, rgba(180, 83, 9, 0.35) 1.5px, transparent 2.2px),
+        radial-gradient(circle at 75% 75%, rgba(180, 83, 9, 0.35) 1.5px, transparent 2.2px),
+        repeating-linear-gradient(60deg, transparent 0, transparent 11px, rgba(30, 41, 59, 0.08) 11px, rgba(30, 41, 59, 0.08) 13px),
+        repeating-linear-gradient(-60deg, transparent 0, transparent 11px, rgba(30, 41, 59, 0.08) 11px, rgba(30, 41, 59, 0.08) 13px),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.42) 0%, rgba(15, 23, 42, 0.25) 50%, rgba(15, 23, 42, 0.46) 100%) !important;
+    background-size: 18px 18px, 18px 18px, 18px 18px, auto, auto, 100% 100% !important;
+    border-color: rgba(245, 158, 11, 0.65) !important;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.45), inset 0 0 25px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* 13. Gucci Motif - Flora Garden Bloom */
+.banner-gucci-flora {
+    background-color: #fdfbf7 !important;
+    background-image: 
+        radial-gradient(circle at 20% 40%, rgba(239, 68, 68, 0.28) 0%, transparent 40%),
+        radial-gradient(circle at 80% 60%, rgba(16, 185, 129, 0.25) 0%, transparent 45%),
+        repeating-linear-gradient(45deg, rgba(202, 138, 4, 0.15) 0px, rgba(202, 138, 4, 0.15) 1px, transparent 1px, transparent 20px),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.38) 0%, rgba(15, 23, 42, 0.22) 50%, rgba(15, 23, 42, 0.42) 100%) !important;
+    border-color: rgba(16, 185, 129, 0.65) !important;
+    box-shadow: 0 10px 30px -5px rgba(16, 185, 129, 0.3), inset 0 0 25px rgba(255, 255, 255, 0.45) !important;
+}
+
+/* Bright Luxury Banner Text & Badge Contrast Enhancement */
+.banner-louis-azur,
+.banner-hermes-orange,
+.banner-tiffany-blue,
+.banner-dior-toile,
+.banner-chanel-tweed,
+.banner-goyard-blanc,
+.banner-gucci-flora {
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
+}
+
+.banner-louis-azur .preview-student-name,
+.banner-hermes-orange .preview-student-name,
+.banner-tiffany-blue .preview-student-name,
+.banner-dior-toile .preview-student-name,
+.banner-chanel-tweed .preview-student-name,
+.banner-goyard-blanc .preview-student-name,
+.banner-gucci-flora .preview-student-name,
+.banner-louis-azur .student-name,
+.banner-hermes-orange .student-name,
+.banner-tiffany-blue .student-name,
+.banner-dior-toile .student-name,
+.banner-chanel-tweed .student-name,
+.banner-goyard-blanc .student-name,
+.banner-gucci-flora .student-name,
+.banner-louis-azur .strip-user-name,
+.banner-hermes-orange .strip-user-name,
+.banner-tiffany-blue .strip-user-name,
+.banner-dior-toile .strip-user-name,
+.banner-chanel-tweed .strip-user-name,
+.banner-goyard-blanc .strip-user-name,
+.banner-gucci-flora .strip-user-name {
+    color: #ffffff !important;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9) !important;
+}
+
+.banner-louis-azur .preview-student-sno,
+.banner-hermes-orange .preview-student-sno,
+.banner-tiffany-blue .preview-student-sno,
+.banner-dior-toile .preview-student-sno,
+.banner-chanel-tweed .preview-student-sno,
+.banner-goyard-blanc .preview-student-sno,
+.banner-gucci-flora .preview-student-sno,
+.banner-louis-azur .student-badge,
+.banner-hermes-orange .student-badge,
+.banner-tiffany-blue .student-badge,
+.banner-dior-toile .student-badge,
+.banner-chanel-tweed .student-badge,
+.banner-goyard-blanc .student-badge,
+.banner-gucci-flora .student-badge,
+.banner-louis-azur .user-role-tag,
+.banner-hermes-orange .user-role-tag,
+.banner-tiffany-blue .user-role-tag,
+.banner-dior-toile .user-role-tag,
+.banner-chanel-tweed .user-role-tag,
+.banner-goyard-blanc .user-role-tag,
+.banner-gucci-flora .user-role-tag {
+    color: #f1f5f9 !important;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9) !important;
+}
+
+.banner-louis-azur .strip-title-badge,
+.banner-hermes-orange .strip-title-badge,
+.banner-tiffany-blue .strip-title-badge,
+.banner-dior-toile .strip-title-badge,
+.banner-chanel-tweed .strip-title-badge,
+.banner-goyard-blanc .strip-title-badge,
+.banner-gucci-flora .strip-title-badge {
+    background: rgba(15, 23, 42, 0.65) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
 }
 
 * {
@@ -27,19 +435,23 @@
 body {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-main);
+    background-image: radial-gradient(circle at 50% -10%, var(--bg-glow) 0%, transparent 65%);
+    background-attachment: fixed;
     color: var(--text-main);
     line-height: 1.5;
     min-height: 100vh;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Navbar */
 .navbar {
-    background-color: rgba(19, 27, 46, 0.85);
-    backdrop-filter: blur(12px);
+    background-color: var(--bg-card);
+    backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;
     z-index: 100;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .nav-container {
@@ -73,6 +485,7 @@ body {
     letter-spacing: -0.5px;
     background: linear-gradient(135deg, #a5b4fc, #6366f1);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     white-space: nowrap;
 }
@@ -642,11 +1055,13 @@ input[type="date"].form-input {
     max-width: 100%;
     height: auto !important;
     display: inline-block;
-    margin: 0.5rem 0;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px;
+    margin: 0.75rem 0;
+    border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: #ffffff !important;
+    padding: 16px 20px !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* Large / Fullscreen Code Viewer Modal */
@@ -751,11 +1166,13 @@ input[type="date"].form-input {
     max-width: 100%;
     height: auto !important;
     display: inline-block;
-    margin: 0.5rem 0;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    background: rgba(255, 255, 255, 0.05);
-    padding: 4px;
+    margin: 0.75rem 0;
+    border-radius: 10px;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: #ffffff !important;
+    padding: 16px 20px !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .modal-splitter-bar {

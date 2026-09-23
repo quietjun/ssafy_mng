@@ -68,6 +68,38 @@ public class Student {
     @Builder.Default
     private boolean cert = true;
 
+    @Column(columnDefinition = "int default 0")
+    @Builder.Default
+    private int points = 0;
+
+    @Column(columnDefinition = "int default 0")
+    @Builder.Default
+    private int totalPointsEarned = 0;
+
+    @Column(length = 50, columnDefinition = "varchar(50) default 'robot'")
+    @Builder.Default
+    private String equippedAvatar = "robot";
+
+    @Column(length = 50, columnDefinition = "varchar(50) default 'none'")
+    @Builder.Default
+    private String equippedFrame = "none";
+
+    @Column(length = 50, columnDefinition = "varchar(50) default 'default'")
+    @Builder.Default
+    private String equippedTheme = "default";
+
+    @Column(length = 100, columnDefinition = "varchar(100) default '새싹 개발자'")
+    @Builder.Default
+    private String equippedTitle = "새싹 개발자";
+
+    @Column(length = 50, columnDefinition = "varchar(50) default 'banner-default'")
+    @Builder.Default
+    private String equippedBanner = "banner-default";
+
+    @Column(columnDefinition = "TEXT")
+    @Builder.Default
+    private String unlockedItems = "robot,none,default,새싹 개발자,banner-default";
+
     public StudentDto toDto() {
         return StudentDto.builder()
                 .sno(sno)
@@ -81,6 +113,14 @@ public class Student {
                 .passwordChanged(passwordChanged)
                 .domain(domain != null ? domain : "여행")
                 .cert(cert)
+                .points(points)
+                .totalPointsEarned(totalPointsEarned)
+                .equippedAvatar(equippedAvatar != null ? equippedAvatar : "robot")
+                .equippedFrame(equippedFrame != null ? equippedFrame : "none")
+                .equippedTheme(equippedTheme != null ? equippedTheme : "default")
+                .equippedTitle(equippedTitle != null ? equippedTitle : "새싹 개발자")
+                .equippedBanner(equippedBanner != null ? equippedBanner : "banner-default")
+                .unlockedItems(unlockedItems != null ? unlockedItems : "robot,none,default,새싹 개발자,banner-default")
                 .build();
     }
 }

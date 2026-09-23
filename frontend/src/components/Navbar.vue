@@ -46,13 +46,29 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useShopStore } from '@/stores/shop'
 
 defineEmits(['open-password-modal'])
 
 const router = useRouter()
 const authStore = useAuthStore()
+const shopStore = useShopStore()
+
+onMounted(async () => {
+  shopStore.loadCatalog()
+  if (authStore.isAuthenticated) {
+    await shopStore.loadProfile()
+  }
+})
+
+watch(() => authStore.isAuthenticated, async (isAuth) => {
+  if (isAuth) {
+    await shopStore.loadProfile()
+  }
+})
 
 async function handleLogout() {
   await authStore.logout()

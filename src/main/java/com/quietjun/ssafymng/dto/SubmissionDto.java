@@ -36,4 +36,11 @@ public class SubmissionDto {
     private String aiKeyIdea;
     private String aiFeedback;
     private String aiKeywords;
+
+    // Gamification & Customization
+    private String studentAvatar;
+    private String studentFrame;
+    private String studentTitle;
+    private Integer earnedPoints;
+    private Integer currentPoints;
 }
