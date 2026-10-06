@@ -45,7 +45,9 @@ public class SecurityConfig {
                     "/api/auth/login",
                     "/api/auth/current",
                     "/api/auth/users",
-                    "/api/speaker/layout"
+                    "/api/auth/reset-password",
+                    "/api/speaker/layout",
+                    "/reset-password"
                 ).permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/problems/**", "/api/problems", "/api/platforms/**", "/api/platforms").permitAll()
                 .requestMatchers("/api/platforms/**", "/api/platforms").hasAuthority("ROLE_ADMIN")

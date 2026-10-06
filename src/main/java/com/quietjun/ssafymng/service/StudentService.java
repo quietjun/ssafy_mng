@@ -186,6 +186,35 @@ public class StudentService {
     }
 
     @Transactional
+    public void resetPassword(String sno, String name) {
+        if (sno == null || sno.isBlank()) {
+            throw new IllegalArgumentException("학번(아이디)을 입력해 주세요.");
+        }
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("이름을 입력해 주세요.");
+        }
+
+        Student student = studentRepository.findById(sno.trim())
+                .orElseThrow(() -> new IllegalArgumentException("일치하는 사용자 정보를 찾을 수 없습니다."));
+
+        if (student.isEscape()) {
+            throw new IllegalArgumentException("비활성화 또는 탈퇴된 계정입니다.");
+        }
+
+        if (!student.getName().trim().equalsIgnoreCase(name.trim())) {
+            throw new IllegalArgumentException("학번과 이름 정보가 일치하지 않습니다.");
+        }
+
+        // 기본 비밀번호: 관리자는 1234, 일반 학생은 본인의 학번(sno)
+        String defaultPassword = (student.getRole() == Role.ROLE_ADMIN) ? "1234" : student.getSno();
+        student.setPassword(passwordEncoder.encode(defaultPassword));
+        student.setPasswordChanged(false);
+        studentRepository.save(student);
+
+        log.info("사용자 [{}] ({})의 비밀번호가 기본값으로 초기화되었습니다.", student.getName(), student.getSno());
+    }
+
+    @Transactional
     public int bulkImport(StudentBulkImportRequest req) {
         if (req.getCsvText() == null || req.getCsvText().isBlank()) {
             return 0;

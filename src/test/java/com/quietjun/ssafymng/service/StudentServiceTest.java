@@ -202,6 +202,76 @@ class StudentServiceTest {
     }
 
     @Nested
+    @DisplayName("비밀번호 분실 초기화 테스트")
+    class ResetPassword {
+
+        @Test
+        @DisplayName("학생 계정 비밀번호 초기화 시 학번으로 재설정되고 passwordChanged가 false가 된다")
+        void resetStudentPassword_Success() {
+            // given
+            Student student = Student.builder()
+                    .sno("20240101")
+                    .name("홍길동")
+                    .password("custom_password")
+                    .role(Role.ROLE_STUDENT)
+                    .passwordChanged(true)
+                    .build();
+
+            given(studentRepository.findById("20240101")).willReturn(Optional.of(student));
+            given(passwordEncoder.encode("20240101")).willReturn("encoded_sno_pw");
+
+            // when
+            studentService.resetPassword("20240101", "홍길동");
+
+            // then
+            assertThat(student.getPassword()).isEqualTo("encoded_sno_pw");
+            assertThat(student.isPasswordChanged()).isFalse();
+            verify(studentRepository).save(student);
+        }
+
+        @Test
+        @DisplayName("관리자 계정 비밀번호 초기화 시 1234로 재설정된다")
+        void resetAdminPassword_Success() {
+            // given
+            Student admin = Student.builder()
+                    .sno("admin")
+                    .name("관리자")
+                    .password("custom_admin_pw")
+                    .role(Role.ROLE_ADMIN)
+                    .passwordChanged(true)
+                    .build();
+
+            given(studentRepository.findById("admin")).willReturn(Optional.of(admin));
+            given(passwordEncoder.encode("1234")).willReturn("encoded_1234");
+
+            // when
+            studentService.resetPassword("admin", "관리자");
+
+            // then
+            assertThat(admin.getPassword()).isEqualTo("encoded_1234");
+            assertThat(admin.isPasswordChanged()).isFalse();
+            verify(studentRepository).save(admin);
+        }
+
+        @Test
+        @DisplayName("이름이 일치하지 않으면 예외가 발생한다")
+        void resetPassword_NameMismatch() {
+            // given
+            Student student = Student.builder()
+                    .sno("20240101")
+                    .name("홍길동")
+                    .build();
+
+            given(studentRepository.findById("20240101")).willReturn(Optional.of(student));
+
+            // when & then
+            assertThatThrownBy(() -> studentService.resetPassword("20240101", "김길동"))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("학번과 이름");
+        }
+    }
+
+    @Nested
     @DisplayName("CSV 일괄 등록 테스트")
     class BulkImport {
 

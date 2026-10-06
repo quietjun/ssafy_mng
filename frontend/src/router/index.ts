@@ -9,9 +9,11 @@ import GradesView from '@/views/GradesView.vue'
 import StudentsView from '@/views/StudentsView.vue'
 import PairsView from '@/views/PairsView.vue'
 import LiveLecturesView from '@/views/LiveLecturesView.vue'
+import ResetPasswordView from '@/views/ResetPasswordView.vue'
 
 const routes = [
   { path: '/', name: 'login', component: LoginView },
+  { path: '/reset-password', name: 'reset-password', component: ResetPasswordView },
   { path: '/assignment', name: 'assignment', component: AssignmentView, meta: { requiresAuth: true } },
   { path: '/speaker', name: 'speaker', component: SpeakerView, meta: { requiresAuth: true, requiresAdmin: true } },
   { path: '/students', name: 'students', component: StudentsView, meta: { requiresAuth: true, requiresAdmin: true } },

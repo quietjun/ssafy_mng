@@ -83,4 +83,28 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
         }
     }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String sno = (body != null) ? body.get("sno") : null;
+        String name = (body != null) ? body.get("name") : null;
+
+        try {
+            studentService.resetPassword(sno, name);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "비밀번호가 기본값으로 성공적으로 초기화되었습니다."
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", "비밀번호 초기화 처리 중 오류가 발생했습니다."
+            ));
+        }
+    }
 }
