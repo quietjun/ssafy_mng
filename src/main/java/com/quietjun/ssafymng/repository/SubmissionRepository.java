@@ -30,5 +30,11 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
 
     long countByStudent_SnoAndResultStatus(String sno, String resultStatus);
 
+    @Query("SELECT s FROM Submission s JOIN FETCH s.student JOIN FETCH s.problem WHERE LOWER(TRIM(s.resultStatus)) = 'pass'")
+    List<Submission> findAllPassedSubmissions();
+
+    @Query("SELECT s FROM Submission s JOIN FETCH s.student JOIN FETCH s.problem WHERE s.student.sno = :sno AND LOWER(TRIM(s.resultStatus)) = 'pass'")
+    List<Submission> findPassedSubmissionsBySno(@Param("sno") String sno);
+
     void deleteByProblem(Problem problem);
 }

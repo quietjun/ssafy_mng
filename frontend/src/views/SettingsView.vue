@@ -2,7 +2,7 @@
   <div class="settings-page">
     <div style="margin-bottom: 2rem;">
       <h2 style="font-size: 1.35rem; font-weight: 800; color: #f8fafc; margin-bottom: 0.35rem;">⚙️ 시스템 환경 및 데이터베이스 관리</h2>
-      <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">클라우드 DB 백업, 좌석 배치 규칙, 과제 출처 사이트, 튜터 추출 스크립트를 관리합니다.</p>
+      <p style="font-size: 0.88rem; color: var(--text-muted); margin: 0;">클라우드 DB 백업, 학생 포인트 소급 적용, 좌석 배치 규칙, 과제 출처 사이트, 튜터 추출 스크립트를 관리합니다.</p>
     </div>
 
     <!-- 1. 클라우드 DB 백업 & 로컬 동기화 카드 (최상단 강조) -->
@@ -175,6 +175,215 @@
                 </td>
                 <td style="text-align:center;">
                   <button class="btn btn-sm btn-danger-outline" style="padding:0.2rem 0.5rem; font-size:0.75rem;" @click="handleDeletePlatform(p)">삭제</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. 학생 포인트 소급 적용 및 관리 카드 -->
+    <div class="card mb-4" style="border: 1px solid rgba(245, 158, 11, 0.45); background: rgba(30, 41, 59, 0.4); margin-bottom: 2.25rem;">
+      <div class="card-header" style="flex-wrap: wrap; gap: 0.8rem;">
+        <div style="display:flex; align-items:center; gap:0.6rem;">
+          <h3 style="font-size: 1.15rem; font-weight: 700; color: #fbbf24; margin: 0;">🪙 학생 포인트 소급 적용 및 동기화</h3>
+          <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.4);">
+            과제 10P · 워크샵 20P
+          </span>
+        </div>
+        <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+          <button 
+            type="button" 
+            class="btn btn-sm btn-outline" 
+            @click="handlePointRetroactive(true)"
+            :disabled="isPointSimulating || isPointApplying"
+          >
+            {{ isPointSimulating ? '시뮬레이션 중...' : '🔍 변동 내역 미리보기 (시뮬레이션)' }}
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-sm btn-primary" 
+            style="background: #d97706; border-color: #d97706; font-weight: 700;"
+            @click="handlePointRetroactive(false)"
+            :disabled="isPointSimulating || isPointApplying"
+          >
+            {{ isPointApplying ? '소급적용 진행 중...' : '🚀 포인트 소급적용 즉시 실행' }}
+          </button>
+        </div>
+      </div>
+
+      <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 1.1rem;">
+        포인트 제도 도입 전 Pass했거나 외부 연동된 학생들의 문제 풀이 이력을 분석하여, 미지급된 포인트를 소급 계산하고 일괄 동기화합니다.
+      </p>
+
+      <!-- 포인트 소급 옵션 설정 패널 -->
+      <div class="p-3 mb-3 rounded border" style="background: rgba(15, 23, 42, 0.6); border-color: rgba(245, 158, 11, 0.25);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; align-items: start;">
+          <div class="form-group">
+            <label class="form-label" style="font-size: 0.8rem; font-weight: 600; color: #fde68a;">
+              🛠️ 워크샵 1문제당 포인트
+            </label>
+            <input 
+              v-model.number="pointOptions.workshopPoints" 
+              type="number" 
+              class="form-input form-input-sm" 
+              min="0" 
+              step="5"
+            />
+            <small style="color: var(--text-muted); font-size: 0.74rem;">기본값: 20P (워크샵 난이도 기준)</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-size: 0.8rem; font-weight: 600; color: #fde68a;">
+              📝 일반 과제 1문제당 포인트
+            </label>
+            <input 
+              v-model.number="pointOptions.assignmentPoints" 
+              type="number" 
+              class="form-input form-input-sm" 
+              min="0" 
+              step="5"
+            />
+            <small style="color: var(--text-muted); font-size: 0.74rem;">기본값: 10P (일반 과제/실습 기준)</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-size: 0.8rem; font-weight: 600; color: #fde68a;">
+              🎯 적용 대상 학생
+            </label>
+            <select v-model="pointOptions.targetSno" class="form-select form-input-sm">
+              <option value="">전체 학생 일괄 적용</option>
+              <option v-for="st in studentList" :key="st.sno" :value="st.sno">
+                {{ st.name }} ({{ st.sno }})
+              </option>
+            </select>
+            <small style="color: var(--text-muted); font-size: 0.74rem;">특정 학생 1명만 선택 가능</small>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-size: 0.8rem; font-weight: 600; color: #fde68a;">
+              ⚙️ 산정 방식 (Mode)
+            </label>
+            <div style="display:flex; flex-direction:column; gap:0.4rem; font-size:0.82rem; margin-top:0.2rem;">
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="radio" value="INCREMENTAL" v-model="pointOptions.mode" />
+                <span><strong>미반영분 차액 가산</strong> (권장, 기존 잔액 유지)</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                <input type="radio" value="RECALCULATE" v-model="pointOptions.mode" />
+                <span><strong>전체 재계산</strong> (풀이 합산 - 상점 구매액 차감)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 실행 결과 리포트 (시뮬레이션 or 즉시실행 성공 시) -->
+      <div v-if="pointResult" class="p-3 rounded border" style="background: rgba(15, 23, 42, 0.75); border-color: rgba(245, 158, 11, 0.35);">
+        <!-- 결과 상단 헤더 & 통계 요약 -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.6rem; margin-bottom: 0.8rem;">
+          <div style="display:flex; align-items:center; gap:0.6rem; flex-wrap:wrap;">
+            <span 
+              class="badge" 
+              :style="pointResult.dryRun ? 'background:rgba(59, 130, 246, 0.2); color:#93c5fd; border:1px solid rgba(59, 130, 246, 0.4);' : 'background:rgba(16, 185, 129, 0.2); color:#6ee7b7; border:1px solid rgba(16, 185, 129, 0.4);'"
+            >
+              {{ pointResult.dryRun ? '🔍 시뮬레이션 미리보기 (DB 미반영)' : '✅ 소급적용 DB 반영 완료' }}
+            </span>
+            <strong style="color: #f8fafc; font-size: 0.95rem;">
+              총 {{ pointResult.totalStudents }}명 중 <span style="color:#fbbf24;">{{ pointResult.affectedStudents }}명 변동</span> · 총 <span style="color:#34d399;">+{{ pointResult.totalPointsAwarded.toLocaleString() }}P</span> 가산
+            </strong>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <button 
+              v-if="pointResult.dryRun && pointResult.affectedStudents > 0" 
+              type="button" 
+              class="btn btn-sm btn-primary" 
+              style="background: #10b981; border-color: #10b981; font-weight:700;"
+              @click="handleConfirmApplyFromPreview"
+              :disabled="isPointApplying"
+            >
+              💾 이 결과대로 즉시 소급적용 실행
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-sm btn-outline" 
+              style="padding:0.15rem 0.5rem; font-size:0.75rem;" 
+              @click="pointResult = null"
+            >
+              &times; 닫기
+            </button>
+          </div>
+        </div>
+
+        <!-- 학생 검색 및 필터 -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; gap:0.5rem; flex-wrap:wrap;">
+          <input 
+            v-model="pointSearchQuery" 
+            type="text" 
+            class="form-input form-input-sm" 
+            placeholder="이름 또는 학번 검색..." 
+            style="max-width: 240px;"
+          />
+          <div style="display:flex; gap:0.4rem; font-size:0.78rem; align-items:center;">
+            <label style="display:flex; align-items:center; gap:0.3rem; color:var(--text-muted); cursor:pointer;">
+              <input type="checkbox" v-model="showOnlyChangedPoints" />
+              변동된 학생만 보기 ({{ changedStudentCount }}명)
+            </label>
+          </div>
+        </div>
+
+        <!-- 학생별 상세 리스트 테이블 -->
+        <div class="table-scroll-container" style="max-height: 320px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 14%;">학번</th>
+                <th style="width: 14%;">이름</th>
+                <th style="width: 22%;">해결 과제 / 워크샵</th>
+                <th style="width: 13%; text-align:right;">상점 소비액</th>
+                <th style="width: 21%; text-align:right;">보유 포인트</th>
+                <th style="width: 16%; text-align:center;">상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="filteredPointDetails.length === 0">
+                <td colspan="6" style="text-align:center; padding:1.5rem;" class="empty-state">
+                  일치하는 학생 내역이 없습니다.
+                </td>
+              </tr>
+              <tr v-for="d in filteredPointDetails" :key="d.sno">
+                <td style="font-family:monospace; color:#94a3b8; font-size:0.85rem;">{{ d.sno }}</td>
+                <td style="font-weight:700; color:#f8fafc;">{{ d.name }}</td>
+                <td style="font-size:0.82rem; color:#cbd5e1;">
+                  과제 {{ d.assignmentSolvedCount }}개 / 워크샵 {{ d.workshopSolvedCount }}개
+                  <span style="color:#64748b; font-size:0.75rem;">(총 {{ d.solvedTotal }}문제)</span>
+                </td>
+                <td style="text-align:right; font-size:0.82rem; color:#f87171;">
+                  {{ d.spentPoints > 0 ? `-${d.spentPoints.toLocaleString()}P` : '-' }}
+                </td>
+                <td style="text-align:right; font-size:0.85rem;">
+                  <span style="color:#94a3b8; text-decoration:line-through; font-size:0.78rem; margin-right:0.3rem;" v-if="d.previousPoints !== d.newPoints">
+                    {{ d.previousPoints.toLocaleString() }}P
+                  </span>
+                  <strong style="color:#fbbf24;">{{ d.newPoints.toLocaleString() }}P</strong>
+                  <span v-if="d.pointDelta > 0" style="color:#34d399; font-weight:700; font-size:0.78rem; margin-left:0.3rem;">
+                    (+{{ d.pointDelta.toLocaleString() }}P)
+                  </span>
+                  <span v-else-if="d.pointDelta < 0" style="color:#f87171; font-weight:700; font-size:0.78rem; margin-left:0.3rem;">
+                    ({{ d.pointDelta.toLocaleString() }}P)
+                  </span>
+                </td>
+                <td style="text-align:center;">
+                  <span v-if="d.pointDelta > 0" class="badge success" style="font-size:0.75rem;">
+                    +{{ d.pointDelta }}P 소급
+                  </span>
+                  <span v-else-if="d.changed" class="badge info" style="font-size:0.75rem;">
+                    동기화됨
+                  </span>
+                  <span v-else style="color:#64748b; font-size:0.75rem;">
+                    변동 없음
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -604,12 +813,125 @@ async function handleCopyScript(item: AdminScriptItem) {
 }
 
 // ----------------------------------------------------
+// 5. Point Retroactive Sync State & Handlers
+// ----------------------------------------------------
+interface PointRetroactiveDetail {
+  sno: string
+  name: string
+  solvedTotal: number
+  workshopSolvedCount: number
+  assignmentSolvedCount: number
+  spentPoints: number
+  previousPoints: number
+  newPoints: number
+  pointDelta: number
+  previousTotalEarned: number
+  newTotalEarned: number
+  totalEarnedDelta: number
+  changed: boolean
+}
+
+interface PointRetroactiveResult {
+  dryRun: boolean
+  mode: string
+  workshopPoints: number
+  assignmentPoints: number
+  totalStudents: number
+  affectedStudents: number
+  totalPointsAwarded: number
+  details: PointRetroactiveDetail[]
+}
+
+const pointOptions = ref({
+  workshopPoints: 20,
+  assignmentPoints: 10,
+  mode: 'INCREMENTAL',
+  targetSno: '',
+  includeEscaped: false
+})
+
+const isPointSimulating = ref(false)
+const isPointApplying = ref(false)
+const pointResult = ref<PointRetroactiveResult | null>(null)
+const pointSearchQuery = ref('')
+const showOnlyChangedPoints = ref(false)
+const studentList = ref<{ sno: string; name: string }[]>([])
+
+async function fetchStudentListForPoints() {
+  try {
+    const res = await api.get('/api/students')
+    studentList.value = res.data || []
+  } catch (err) {
+    console.error('Failed to load students for point options', err)
+  }
+}
+
+async function handlePointRetroactive(isDryRun: boolean) {
+  if (!isDryRun) {
+    const msg = pointOptions.value.targetSno
+      ? `선택한 학생의 포인트를 소급적용하시겠습니까?`
+      : `전체 학생의 포인트를 소급적용하시겠습니까?\n(방식: ${pointOptions.value.mode === 'INCREMENTAL' ? '미반영분 차액 가산' : '전체 재계산'})`
+    if (!confirm(msg)) {
+      return
+    }
+  }
+
+  if (isDryRun) {
+    isPointSimulating.value = true
+  } else {
+    isPointApplying.value = true
+  }
+
+  try {
+    const payload = {
+      ...pointOptions.value,
+      dryRun: isDryRun
+    }
+    const res = await api.post('/api/admin/points/retroactive-apply', payload)
+    pointResult.value = res.data
+    if (!isDryRun) {
+      alert(`포인트 소급적용이 완료되었습니다!\n총 ${res.data.affectedStudents}명의 학생에게 ${res.data.totalPointsAwarded.toLocaleString()}P가 지급/동기화되었습니다.`)
+      await fetchStudentListForPoints()
+    }
+  } catch (err: any) {
+    alert((isDryRun ? '시뮬레이션 실패: ' : '소급적용 실패: ') + (err.response?.data?.message || err.message))
+  } finally {
+    isPointSimulating.value = false
+    isPointApplying.value = false
+  }
+}
+
+async function handleConfirmApplyFromPreview() {
+  await handlePointRetroactive(false)
+}
+
+const changedStudentCount = computed(() => {
+  if (!pointResult.value?.details) return 0
+  return pointResult.value.details.filter(d => d.changed).length
+})
+
+const filteredPointDetails = computed(() => {
+  if (!pointResult.value?.details) return []
+  return pointResult.value.details.filter(d => {
+    if (showOnlyChangedPoints.value && !d.changed) {
+      return false
+    }
+    if (pointSearchQuery.value.trim()) {
+      const q = pointSearchQuery.value.trim().toLowerCase()
+      return d.name.toLowerCase().includes(q) || d.sno.toLowerCase().includes(q)
+    }
+    return true
+  })
+})
+
+// ----------------------------------------------------
 // Lifecycle Hooks
 // ----------------------------------------------------
 onMounted(() => {
   fetchGridConfig()
   fetchPlatforms()
   fetchScripts()
+  fetchStudentListForPoints()
 })
 </script>
 

@@ -7,14 +7,22 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.quietjun.ssafymng.dto.PointRetroactiveDetailDto;
+import com.quietjun.ssafymng.dto.PointRetroactiveRequest;
+import com.quietjun.ssafymng.dto.PointRetroactiveResultDto;
 import com.quietjun.ssafymng.dto.ShopItemDto;
 import com.quietjun.ssafymng.dto.ShopProfileDto;
+import com.quietjun.ssafymng.entity.Problem;
 import com.quietjun.ssafymng.entity.Role;
 import com.quietjun.ssafymng.entity.Student;
+import com.quietjun.ssafymng.entity.Submission;
 import com.quietjun.ssafymng.repository.StudentRepository;
+import com.quietjun.ssafymng.repository.SubmissionRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PointShopService {
 
     private final StudentRepository studentRepository;
+    private final SubmissionRepository submissionRepository;
 
     // 카탈로그 데이터 정의
     private static final List<ShopItemDto> CATALOG = List.of(
@@ -486,5 +495,172 @@ public class PointShopService {
                     .forEach(set::add);
         }
         return set;
+    }
+
+    /**
+     * 학생 포인트 소급 적용 및 동기화 (관리자 전용 기능)
+     * - 각 학생의 Pass 과제/워크샵 제출 이력을 집계하여 미반영분 차액을 가산하거나 전체 재계산
+     */
+    @Transactional
+    public PointRetroactiveResultDto applyRetroactivePoints(PointRetroactiveRequest req) {
+        final PointRetroactiveRequest effectiveReq = (req != null) ? req : new PointRetroactiveRequest();
+        final int workshopPoints = effectiveReq.getWorkshopPoints() > 0 ? effectiveReq.getWorkshopPoints() : 20;
+        final int assignmentPoints = effectiveReq.getAssignmentPoints() > 0 ? effectiveReq.getAssignmentPoints() : 10;
+        final String mode = (effectiveReq.getMode() != null && !effectiveReq.getMode().isBlank()) ? effectiveReq.getMode().trim().toUpperCase() : "INCREMENTAL";
+        final boolean isDryRun = effectiveReq.isDryRun();
+        final String targetSno = (effectiveReq.getTargetSno() != null && !effectiveReq.getTargetSno().isBlank()) ? effectiveReq.getTargetSno().trim() : null;
+        final boolean includeEscaped = effectiveReq.isIncludeEscaped();
+
+        List<Student> targetStudents;
+        if (targetSno != null) {
+            Student single = studentRepository.findById(targetSno)
+                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 학생입니다: " + targetSno));
+            if (single.getRole() != Role.ROLE_STUDENT) {
+                throw new IllegalArgumentException("관리자 계정은 포인트 소급 적용 대상이 아닙니다.");
+            }
+            targetStudents = List.of(single);
+        } else {
+            if (includeEscaped) {
+                targetStudents = studentRepository.findByRole(Role.ROLE_STUDENT);
+            } else {
+                targetStudents = studentRepository.findByRoleAndEscapeFalse(Role.ROLE_STUDENT);
+            }
+        }
+
+        // 전체 Pass 제출 내역 조회 및 학생별 그룹화
+        List<Submission> allPassedSubmissions;
+        if (targetSno != null) {
+            allPassedSubmissions = submissionRepository.findPassedSubmissionsBySno(targetSno);
+        } else {
+            allPassedSubmissions = submissionRepository.findAllPassedSubmissions();
+        }
+
+        Map<String, List<Submission>> studentSubmissionsMap = allPassedSubmissions.stream()
+                .filter(s -> s.getStudent() != null && s.getProblem() != null)
+                .collect(Collectors.groupingBy(s -> s.getStudent().getSno()));
+
+        List<PointRetroactiveDetailDto> details = new ArrayList<>();
+        int affectedStudentsCount = 0;
+        int totalPointsAwarded = 0;
+
+        for (Student student : targetStudents) {
+            List<Submission> subs = studentSubmissionsMap.getOrDefault(student.getSno(), List.of());
+
+            // 동일 문제 중복 제출 방지 (문제 ID 기준 고유 문제 집계)
+            Map<Long, Problem> uniqueProblems = new HashMap<>();
+            for (Submission s : subs) {
+                if (s.getProblem() != null && s.getProblem().getId() != null) {
+                    uniqueProblems.put(s.getProblem().getId(), s.getProblem());
+                }
+            }
+
+            int workshopCount = 0;
+            int assignmentCount = 0;
+            for (Problem p : uniqueProblems.values()) {
+                String type = p.getProblemType();
+                if (type != null && type.trim().equals("워크샵")) {
+                    workshopCount++;
+                } else {
+                    assignmentCount++;
+                }
+            }
+
+            int calculatedTotalEarned = (workshopCount * workshopPoints) + (assignmentCount * assignmentPoints);
+
+            // 상점 아이템 구매로 소모된 포인트 합산
+            Set<String> unlockedSet = parseUnlockedItems(student.getUnlockedItems());
+            int spentPoints = CATALOG.stream()
+                    .filter(item -> !item.isDefaultOwned() && unlockedSet.contains(item.getId()))
+                    .mapToInt(ShopItemDto::getPrice)
+                    .sum();
+
+            int prevPoints = student.getPoints();
+            int prevTotalEarned = student.getTotalPointsEarned();
+
+            int newPoints;
+            int newTotalEarned;
+
+            if ("RECALCULATE".equals(mode)) {
+                newTotalEarned = calculatedTotalEarned;
+                newPoints = Math.max(0, calculatedTotalEarned - spentPoints);
+            } else {
+                // INCREMENTAL (미반영분 차액만 가산)
+                int earnedDelta = Math.max(0, calculatedTotalEarned - prevTotalEarned);
+                newTotalEarned = Math.max(prevTotalEarned, calculatedTotalEarned);
+                newPoints = prevPoints + earnedDelta;
+            }
+
+            int pointDelta = newPoints - prevPoints;
+            int totalEarnedDelta = newTotalEarned - prevTotalEarned;
+            boolean isChanged = (pointDelta != 0 || totalEarnedDelta != 0 || student.getSolved() == null || student.getSolved() != uniqueProblems.size());
+
+            if (pointDelta > 0) {
+                totalPointsAwarded += pointDelta;
+            }
+            if (isChanged) {
+                affectedStudentsCount++;
+            }
+
+            if (!isDryRun && isChanged) {
+                student.setPoints(newPoints);
+                student.setTotalPointsEarned(newTotalEarned);
+                student.setSolved(uniqueProblems.size());
+                studentRepository.save(student);
+            }
+
+            details.add(PointRetroactiveDetailDto.builder()
+                    .sno(student.getSno())
+                    .name(student.getName())
+                    .solvedTotal(uniqueProblems.size())
+                    .workshopSolvedCount(workshopCount)
+                    .assignmentSolvedCount(assignmentCount)
+                    .spentPoints(spentPoints)
+                    .previousPoints(prevPoints)
+                    .newPoints(newPoints)
+                    .pointDelta(pointDelta)
+                    .previousTotalEarned(prevTotalEarned)
+                    .newTotalEarned(newTotalEarned)
+                    .totalEarnedDelta(totalEarnedDelta)
+                    .changed(isChanged)
+                    .build());
+        }
+
+        // 변동이 있는 학생을 상단에, 그다음 학번순 정렬
+        details.sort((a, b) -> {
+            if (a.isChanged() != b.isChanged()) {
+                return a.isChanged() ? -1 : 1;
+            }
+            return a.getSno().compareTo(b.getSno());
+        });
+
+        log.info("포인트 소급 적용 완료 [dryRun={}, mode={}, 대상 학생: {}명, 변동 학생: {}명, 총 지급: {}P]",
+                isDryRun, mode, targetStudents.size(), affectedStudentsCount, totalPointsAwarded);
+
+        return PointRetroactiveResultDto.builder()
+                .dryRun(isDryRun)
+                .mode(mode)
+                .workshopPoints(workshopPoints)
+                .assignmentPoints(assignmentPoints)
+                .totalStudents(targetStudents.size())
+                .affectedStudents(affectedStudentsCount)
+                .totalPointsAwarded(totalPointsAwarded)
+                .details(details)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getPointSummary() {
+        List<Student> students = studentRepository.findByRoleAndEscapeFalse(Role.ROLE_STUDENT);
+        int totalStudents = students.size();
+        int totalPointsInCirculation = students.stream().mapToInt(Student::getPoints).sum();
+        int totalPointsEarned = students.stream().mapToInt(Student::getTotalPointsEarned).sum();
+        int passedSubmissionsCount = submissionRepository.findAllPassedSubmissions().size();
+
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalStudents", totalStudents);
+        summary.put("totalPointsInCirculation", totalPointsInCirculation);
+        summary.put("totalPointsEarned", totalPointsEarned);
+        summary.put("passedSubmissionsCount", passedSubmissionsCount);
+        return summary;
     }
 }
