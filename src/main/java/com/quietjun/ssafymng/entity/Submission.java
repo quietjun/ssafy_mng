@@ -113,6 +113,7 @@ public class Submission {
                 .studentAvatar(student != null ? student.getEquippedAvatar() : "robot")
                 .studentFrame(student != null ? student.getEquippedFrame() : "none")
                 .studentTitle(student != null ? student.getEquippedTitle() : "새싹 개발자")
+                .studentBanner(student != null ? student.getEquippedBanner() : "banner-default")
                 .currentPoints(student != null ? student.getPoints() : 0)
                 .build();
     }

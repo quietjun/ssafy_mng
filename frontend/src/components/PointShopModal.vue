@@ -39,6 +39,7 @@
             <div class="preview-title-row">
               <span class="preview-title-badge">{{ shopStore.currentTitle }}</span>
               <span class="preview-theme-badge">{{ shopStore.currentThemeIcon }} {{ currentThemeName }}</span>
+              <span class="preview-cursor-badge" title="현재 장착된 마우스 커서">🖱️ {{ currentCursorName }}</span>
             </div>
             <div class="preview-name-row">
               <h4 class="preview-student-name">{{ shopStore.profile?.name || '학생' }}</h4>
@@ -59,52 +60,61 @@
             :class="['shop-tab', { active: shopStore.activeTab === 'AVATAR' }]"
             @click="shopStore.activeTab = 'AVATAR'"
           >
-            🎭 캐릭터 아바타
+            🎭 아바타
           </button>
           <button 
             type="button" 
             :class="['shop-tab', { active: shopStore.activeTab === 'FRAME' }]"
             @click="shopStore.activeTab = 'FRAME'"
           >
-            🖼️ 프로필 오라
+            🖼️ 오라
           </button>
           <button 
             type="button" 
             :class="['shop-tab', { active: shopStore.activeTab === 'THEME' }]"
             @click="shopStore.activeTab = 'THEME'"
           >
-            🎨 화면 테마
+            🎨 테마
           </button>
           <button 
             type="button" 
             :class="['shop-tab', { active: shopStore.activeTab === 'TITLE' }]"
             @click="shopStore.activeTab = 'TITLE'"
           >
-            🏷️ 명예 칭호
+            🏷️ 칭호
           </button>
           <button 
             type="button" 
             :class="['shop-tab', { active: shopStore.activeTab === 'BANNER' }]"
             @click="shopStore.activeTab = 'BANNER'"
           >
-            👜 명품 배너
+            👜 배너
+          </button>
+          <button 
+            type="button" 
+            :class="['shop-tab', { active: shopStore.activeTab === 'CURSOR' }]"
+            @click="shopStore.activeTab = 'CURSOR'"
+          >
+            🖱️ 커서
           </button>
           <button 
             type="button" 
             :class="['shop-tab', { active: shopStore.activeTab === 'RANKING' }]"
             @click="switchToRanking"
           >
-            🏆 포인트 랭킹
+            🏆 랭킹
           </button>
         </div>
 
-        <!-- 3) Tab Content: Item Grid Cards (For AVATAR, FRAME, THEME, TITLE, BANNER) -->
+        <!-- 3) Tab Content: Item Grid Cards (For AVATAR, FRAME, THEME, TITLE, BANNER, CURSOR) -->
         <div v-if="shopStore.activeTab !== 'RANKING'" class="shop-items-container">
           <div class="shop-items-grid">
             <div 
               v-for="item in currentCategoryItems" 
               :key="item.id" 
               :class="['shop-item-card', { equipped: isEquipped(item), owned: isOwned(item) }]"
+              @mouseenter="item.category === 'CURSOR' ? previewCursor(item.id) : null"
+              @mouseleave="item.category === 'CURSOR' ? restoreCursor() : null"
             >
               <!-- Card Top Preview Icon -->
               <div class="item-icon-area">
@@ -121,6 +131,11 @@
                   <div class="banner-preview-overlay">
                     <span class="banner-preview-badge">{{ item.icon }} {{ item.name.split(' (')[0] }}</span>
                   </div>
+                </div>
+                <!-- If category is CURSOR, show cursor preview box with hover test label -->
+                <div v-else-if="item.category === 'CURSOR'" class="item-cursor-preview">
+                  <span class="cursor-preview-icon">{{ item.icon }}</span>
+                  <span class="cursor-test-hint">마우스 올려 체험 ✨</span>
                 </div>
                 <!-- Default Avatar / Title Icon -->
                 <span v-else class="item-emoji">{{ item.icon || '✨' }}</span>
@@ -245,6 +260,20 @@ const currentThemeName = computed(() => {
   return item?.name || '다크 슬레이트'
 })
 
+const currentCursorName = computed(() => {
+  const cursorId = shopStore.profile?.equippedCursor || 'cursor-default'
+  const item = shopStore.catalog.find(i => i.id === cursorId && i.category === 'CURSOR')
+  return item?.name || '클래식 포인터'
+})
+
+function previewCursor(cursorId: string) {
+  shopStore.applyCursor(cursorId)
+}
+
+function restoreCursor() {
+  shopStore.applyCursor(shopStore.profile?.equippedCursor || 'cursor-default')
+}
+
 function isOwned(item: ShopItem): boolean {
   if (item.defaultOwned) return true
   return shopStore.profile?.unlockedItemIds?.includes(item.id) ?? false
@@ -258,6 +287,7 @@ function isEquipped(item: ShopItem): boolean {
     case 'THEME': return shopStore.profile.equippedTheme === item.id
     case 'TITLE': return shopStore.profile.equippedTitle === item.name
     case 'BANNER': return (shopStore.profile.equippedBanner || 'banner-default') === item.id
+    case 'CURSOR': return (shopStore.profile.equippedCursor || 'cursor-default') === item.id
     default: return false
   }
 }
@@ -474,6 +504,15 @@ function getFrameClass(input?: string | ShopItem): string {
   border-radius: 12px;
 }
 
+.preview-cursor-badge {
+  font-size: 0.75rem;
+  background: rgba(244, 114, 182, 0.15);
+  color: #f472b6;
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+}
+
 .preview-name-row {
   display: flex;
   align-items: baseline;
@@ -503,23 +542,29 @@ function getFrameClass(input?: string | ShopItem): string {
 /* 2) Shop Tabs */
 .shop-tabs {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.35rem;
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 0.5rem;
-  overflow-x: auto;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .shop-tab {
-  padding: 0.5rem 0.9rem;
+  flex: 1 1 0px;
+  min-width: 0;
+  padding: 0.5rem 0.2rem;
   background: rgba(30, 41, 59, 0.5);
   border: 1px solid transparent;
   border-radius: 8px;
   color: #94a3b8;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  text-align: center;
   transition: all 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .shop-tab:hover {
@@ -652,6 +697,41 @@ function getFrameClass(input?: string | ShopItem): string {
   font-weight: 700;
   color: #f8fafc;
   letter-spacing: -0.2px;
+}
+
+.item-cursor-preview {
+  width: 100%;
+  height: 64px;
+  border-radius: 8px;
+  background: radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.15) 0%, rgba(15, 23, 42, 0.6) 100%);
+  border: 1px dashed rgba(244, 114, 182, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  transition: all 0.25s ease;
+}
+
+.shop-item-card:hover .item-cursor-preview {
+  border-color: #f472b6;
+  background: radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.28) 0%, rgba(15, 23, 42, 0.8) 100%);
+  transform: scale(1.03);
+}
+
+.cursor-preview-icon {
+  font-size: 1.6rem;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+}
+
+.cursor-test-hint {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #f472b6;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 0.08rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid rgba(244, 114, 182, 0.3);
 }
 
 .item-info-area {

@@ -2258,3 +2258,361 @@ input[type="date"].form-input {
     align-items: center;
 }
 
+/* ========================================================
+   Custom Mouse Cursors (SVG Data URIs)
+   ======================================================== */
+[data-cursor="cursor-magic-star"], [data-cursor="cursor-magic-star"] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M3 3 L10 17 L13 13 L21 21 L23 19 L15 11 L19 8 Z' fill='%23fde047' stroke='%23d97706' stroke-width='1.5'/%3E%3Cpolygon points='19,2 21,6 25,6 22,9 23,13 19,10 15,13 16,9 13,6 17,6' fill='%23ec4899'/%3E%3C/svg%3E") 3 3, auto !important;
+}
+
+[data-cursor="cursor-cyber-crosshair"], [data-cursor="cursor-cyber-crosshair"] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='14' cy='14' r='10' fill='none' stroke='%2300f0ff' stroke-width='2' stroke-dasharray='4 2'/%3E%3Ccircle cx='14' cy='14' r='3' fill='%23ff007f'/%3E%3Cline x1='14' y1='1' x2='14' y2='7' stroke='%2300f0ff' stroke-width='2'/%3E%3Cline x1='14' y1='21' x2='14' y2='27' stroke='%2300f0ff' stroke-width='2'/%3E%3Cline x1='1' y1='14' x2='7' y2='14' stroke='%2300f0ff' stroke-width='2'/%3E%3Cline x1='21' y1='14' x2='27' y2='14' stroke='%2300f0ff' stroke-width='2'/%3E%3C/svg%3E") 14 14, crosshair !important;
+}
+
+[data-cursor="cursor-pixel-sword"], [data-cursor="cursor-pixel-sword"] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect x='22' y='2' width='4' height='4' fill='%2360a5fa'/%3E%3Crect x='18' y='6' width='4' height='4' fill='%2393c5fd'/%3E%3Crect x='14' y='10' width='4' height='4' fill='%2393c5fd'/%3E%3Crect x='10' y='14' width='4' height='4' fill='%2360a5fa'/%3E%3Crect x='14' y='14' width='4' height='4' fill='%23fbbf24'/%3E%3Crect x='6' y='14' width='4' height='4' fill='%23fbbf24'/%3E%3Crect x='6' y='18' width='4' height='4' fill='%23b45309'/%3E%3Crect x='2' y='22' width='4' height='4' fill='%2378350f'/%3E%3C/svg%3E") 22 2, auto !important;
+}
+
+[data-cursor="cursor-cat-paw"], [data-cursor="cursor-cat-paw"] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cellipse cx='14' cy='16' rx='7' ry='6' fill='%23f472b6' stroke='%23db2777' stroke-width='1.5'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%23fb7185'/%3E%3Ccircle cx='14' cy='6' r='3' fill='%23fb7185'/%3E%3Ccircle cx='20' cy='8' r='3' fill='%23fb7185'/%3E%3C/svg%3E") 14 16, auto !important;
+}
+
+[data-cursor="cursor-fire-flame"], [data-cursor="cursor-fire-flame"] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M14 2 C16 8 22 10 22 17 C22 23 17 26 13 26 C7 26 5 20 7 15 C8 17 10 18 12 17 C10 12 13 6 14 2 Z' fill='%23f97316' stroke='%23ef4444' stroke-width='1'/%3E%3Cpath d='M13 14 C15 17 17 18 17 21 C17 24 15 25 13 25 C10 25 9 22 10 19 C11 20 12 20 13 19 C12 16 13 15 13 14 Z' fill='%23fde047'/%3E%3C/svg%3E") 14 2, auto !important;
+}
+
+[data-cursor="cursor-code-terminal"], [data-cursor="cursor-code-terminal"] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Crect x='2' y='4' width='24' height='20' rx='3' fill='%23051608' stroke='%2322c55e' stroke-width='1.5'/%3E%3Cpath d='M6 10 L11 14 L6 18' fill='none' stroke='%2322c55e' stroke-width='2' stroke-linecap='round'/%3E%3Cline x1='14' y1='18' x2='20' y2='18' stroke='%234ade80' stroke-width='2'/%3E%3C/svg%3E") 6 10, auto !important;
+}
+
+[data-cursor="cursor-bubble-pop"], [data-cursor="cursor-bubble-pop"] * {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Ccircle cx='13' cy='13' r='10' fill='rgba(56,189,248,0.35)' stroke='%2338bdf8' stroke-width='2'/%3E%3Cellipse cx='9' cy='8' rx='3' ry='2' fill='%23ffffff' transform='rotate(-30 9 8)'/%3E%3Ccircle cx='21' cy='21' r='3' fill='rgba(192,132,252,0.45)' stroke='%23c084fc' stroke-width='1'/%3E%3C/svg%3E") 13 13, auto !important;
+}
+
+/* ========================================================
+   Peer Submissions - Luxury Banner Row & Badges
+   ======================================================== */
+.peer-table tbody tr.peer-row {
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    border-left: 4px solid transparent;
+}
+
+.peer-table tbody tr.peer-row td {
+    transition: background 0.25s ease;
+}
+
+/* Specific Luxury Banner Rows */
+.peer-table tbody tr.peer-row.banner-louis-monogram {
+    border-left-color: #f59e0b !important;
+    background: linear-gradient(90deg, rgba(202, 138, 4, 0.12) 0%, rgba(24, 14, 9, 0.4) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-louis-monogram:hover td {
+    background: rgba(202, 138, 4, 0.16) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-gucci-stripe {
+    border-left-color: #ef4444 !important;
+    background: linear-gradient(90deg, rgba(185, 28, 28, 0.15) 0%, rgba(13, 56, 30, 0.15) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-gucci-stripe:hover td {
+    background: rgba(185, 28, 28, 0.16) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-burberry-check {
+    border-left-color: #d97706 !important;
+    background: linear-gradient(90deg, rgba(217, 119, 6, 0.14) 0%, rgba(38, 27, 18, 0.4) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-burberry-check:hover td {
+    background: rgba(217, 119, 6, 0.16) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-goyard-chevron {
+    border-left-color: #eab308 !important;
+    background: linear-gradient(90deg, rgba(234, 179, 8, 0.13) 0%, rgba(11, 12, 16, 0.45) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-goyard-chevron:hover td {
+    background: rgba(234, 179, 8, 0.15) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-chanel-quilted {
+    border-left-color: #f8fafc !important;
+    background: linear-gradient(90deg, rgba(248, 250, 252, 0.12) 0%, rgba(8, 8, 11, 0.5) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-chanel-quilted:hover td {
+    background: rgba(248, 250, 252, 0.14) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-dior-oblique {
+    border-left-color: #38bdf8 !important;
+    background: linear-gradient(90deg, rgba(56, 189, 248, 0.14) 0%, rgba(8, 14, 34, 0.45) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-dior-oblique:hover td {
+    background: rgba(56, 189, 248, 0.16) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-louis-azur {
+    border-left-color: #67e8f9 !important;
+    background: linear-gradient(90deg, rgba(103, 232, 249, 0.14) 0%, rgba(240, 249, 255, 0.08) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-louis-azur:hover td {
+    background: rgba(103, 232, 249, 0.16) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-hermes-orange {
+    border-left-color: #ea580c !important;
+    background: linear-gradient(90deg, rgba(234, 88, 12, 0.18) 0%, rgba(40, 18, 5, 0.45) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-hermes-orange:hover td {
+    background: rgba(234, 88, 12, 0.2) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-tiffany-blue {
+    border-left-color: #2dd4bf !important;
+    background: linear-gradient(90deg, rgba(45, 212, 191, 0.16) 0%, rgba(13, 148, 136, 0.1) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-tiffany-blue:hover td {
+    background: rgba(45, 212, 191, 0.18) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-dior-toile {
+    border-left-color: #93c5fd !important;
+    background: linear-gradient(90deg, rgba(147, 197, 253, 0.15) 0%, rgba(30, 41, 59, 0.4) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-dior-toile:hover td {
+    background: rgba(147, 197, 253, 0.18) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-chanel-tweed {
+    border-left-color: #f472b6 !important;
+    background: linear-gradient(90deg, rgba(244, 114, 182, 0.16) 0%, rgba(251, 207, 232, 0.1) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-chanel-tweed:hover td {
+    background: rgba(244, 114, 182, 0.18) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-goyard-blanc {
+    border-left-color: #e2e8f0 !important;
+    background: linear-gradient(90deg, rgba(226, 232, 240, 0.14) 0%, rgba(15, 23, 42, 0.4) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-goyard-blanc:hover td {
+    background: rgba(226, 232, 240, 0.16) !important;
+}
+
+.peer-table tbody tr.peer-row.banner-gucci-flora {
+    border-left-color: #fb7185 !important;
+    background: linear-gradient(90deg, rgba(251, 113, 133, 0.16) 0%, rgba(244, 63, 94, 0.1) 30%, transparent 100%);
+}
+.peer-table tbody tr.peer-row.banner-gucci-flora:hover td {
+    background: rgba(251, 113, 133, 0.18) !important;
+}
+
+/* Luxury Banner Pill Badge in Student Row */
+.luxury-banner-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.12rem 0.55rem;
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    white-space: nowrap;
+    animation: luxuryPulse 3s ease-in-out infinite;
+}
+
+@keyframes luxuryPulse {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.02); filter: brightness(1.15); }
+}
+
+/* Luxury Banner Icon Only Emblem Badge */
+.luxury-banner-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 0.8rem;
+    border-radius: 50%;
+    cursor: help;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+    border: 1.5px solid rgba(255, 255, 255, 0.35);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+    animation: luxuryPulse 3s ease-in-out infinite;
+}
+
+.luxury-banner-icon-badge:hover {
+    transform: scale(1.28);
+    filter: brightness(1.25);
+    z-index: 10;
+}
+
+/* Title Icon Only Emblem Badge */
+.title-icon-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 0.8rem;
+    border-radius: 50%;
+    cursor: help;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.28), rgba(245, 158, 11, 0.4));
+    border: 1.5px solid rgba(245, 158, 11, 0.65);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+}
+
+.title-icon-badge:hover {
+    transform: scale(1.28);
+    filter: brightness(1.25);
+    z-index: 10;
+}
+
+.luxury-banner-icon-badge.banner-louis-monogram,
+.luxury-banner-icon-badge.banner-louis-azur,
+.luxury-banner-pill.banner-louis-monogram,
+.luxury-banner-pill.banner-louis-azur {
+    background: linear-gradient(135deg, #78350f, #d97706);
+    color: #fef08a;
+    border-color: #fbbf24;
+}
+
+.luxury-banner-icon-badge.banner-gucci-stripe,
+.luxury-banner-icon-badge.banner-gucci-flora,
+.luxury-banner-pill.banner-gucci-stripe,
+.luxury-banner-pill.banner-gucci-flora {
+    background: linear-gradient(135deg, #991b1b, #15803d);
+    color: #ffffff;
+    border-color: #ef4444;
+}
+
+.luxury-banner-icon-badge.banner-burberry-check,
+.luxury-banner-pill.banner-burberry-check {
+    background: linear-gradient(135deg, #78350f, #b45309);
+    color: #fef3c7;
+    border-color: #d97706;
+}
+
+.luxury-banner-icon-badge.banner-goyard-chevron,
+.luxury-banner-icon-badge.banner-goyard-blanc,
+.luxury-banner-pill.banner-goyard-chevron,
+.luxury-banner-pill.banner-goyard-blanc {
+    background: linear-gradient(135deg, #1e293b, #b45309);
+    color: #f8fafc;
+    border-color: #eab308;
+}
+
+.luxury-banner-icon-badge.banner-chanel-quilted,
+.luxury-banner-icon-badge.banner-chanel-tweed,
+.luxury-banner-pill.banner-chanel-quilted,
+.luxury-banner-pill.banner-chanel-tweed {
+    background: linear-gradient(135deg, #09090b, #27272a);
+    color: #f8fafc;
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.luxury-banner-icon-badge.banner-dior-oblique,
+.luxury-banner-icon-badge.banner-dior-toile,
+.luxury-banner-pill.banner-dior-oblique,
+.luxury-banner-pill.banner-dior-toile {
+    background: linear-gradient(135deg, #1e1b4b, #2563eb);
+    color: #e0e7ff;
+    border-color: #60a5fa;
+}
+
+.luxury-banner-icon-badge.banner-hermes-orange,
+.luxury-banner-pill.banner-hermes-orange {
+    background: linear-gradient(135deg, #9a3412, #ea580c);
+    color: #fff7ed;
+    border-color: #fb923c;
+}
+
+.luxury-banner-icon-badge.banner-tiffany-blue,
+.luxury-banner-pill.banner-tiffany-blue {
+    background: linear-gradient(135deg, #115e59, #0d9488);
+    color: #ccfbf1;
+    border-color: #2dd4bf;
+}
+
+/* Wide Luxury Banner Header in Expanded Detail Card */
+.peer-detail-banner-header {
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.peer-detail-banner-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    transform: skewX(-25deg);
+    animation: bannerShine 4s ease-in-out infinite;
+}
+
+@keyframes bannerShine {
+    0% { left: -100%; }
+    20%, 100% { left: 180%; }
+}
+
+.peer-detail-banner-header .banner-header-avatar {
+    flex-shrink: 0;
+}
+
+.peer-detail-banner-header .banner-header-avatar .avatar-frame-badge {
+    width: 44px;
+    height: 44px;
+    font-size: 1.6rem;
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.peer-detail-banner-header .banner-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.peer-detail-banner-header .banner-header-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.peer-detail-banner-header .banner-badge-tag {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #f8fafc;
+    letter-spacing: 0.3px;
+}
+
+.peer-detail-banner-header .banner-header-student-name {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffffff;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.85);
+}
+
+

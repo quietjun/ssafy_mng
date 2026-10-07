@@ -21,5 +21,6 @@ public class ShopProfileDto {
     private String equippedTheme;
     private String equippedTitle;
     private String equippedBanner;
+    private String equippedCursor;
     private List<String> unlockedItemIds;
 }

@@ -96,9 +96,13 @@ public class Student {
     @Builder.Default
     private String equippedBanner = "banner-default";
 
+    @Column(length = 50, columnDefinition = "varchar(50) default 'cursor-default'")
+    @Builder.Default
+    private String equippedCursor = "cursor-default";
+
     @Column(columnDefinition = "TEXT")
     @Builder.Default
-    private String unlockedItems = "robot,none,default,새싹 개발자,banner-default";
+    private String unlockedItems = "robot,none,default,새싹 개발자,banner-default,cursor-default";
 
     public StudentDto toDto() {
         return StudentDto.builder()
@@ -120,7 +124,8 @@ public class Student {
                 .equippedTheme(equippedTheme != null ? equippedTheme : "default")
                 .equippedTitle(equippedTitle != null ? equippedTitle : "새싹 개발자")
                 .equippedBanner(equippedBanner != null ? equippedBanner : "banner-default")
-                .unlockedItems(unlockedItems != null ? unlockedItems : "robot,none,default,새싹 개발자,banner-default")
+                .equippedCursor(equippedCursor != null ? equippedCursor : "cursor-default")
+                .unlockedItems(unlockedItems != null ? unlockedItems : "robot,none,default,새싹 개발자,banner-default,cursor-default")
                 .build();
     }
 }

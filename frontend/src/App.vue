@@ -79,6 +79,7 @@ const isChangingPw = ref(false)
 
 onMounted(async () => {
   shopStore.applyTheme()
+  shopStore.applyCursor()
   await authStore.checkAuth()
   if (authStore.isAuthenticated) {
     await shopStore.loadProfile()

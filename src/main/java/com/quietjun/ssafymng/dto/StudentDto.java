@@ -47,7 +47,9 @@ public class StudentDto implements Comparable<StudentDto> {
     @Builder.Default
     private String equippedBanner = "banner-default";
     @Builder.Default
-    private String unlockedItems = "robot,none,default,새싹 개발자,banner-default";
+    private String equippedCursor = "cursor-default";
+    @Builder.Default
+    private String unlockedItems = "robot,none,default,새싹 개발자,banner-default,cursor-default";
 
     @Override
     public int compareTo(StudentDto o) {
@@ -78,7 +80,8 @@ public class StudentDto implements Comparable<StudentDto> {
                 .equippedTheme(equippedTheme != null ? equippedTheme : "default")
                 .equippedTitle(equippedTitle != null ? equippedTitle : "새싹 개발자")
                 .equippedBanner(equippedBanner != null ? equippedBanner : "banner-default")
-                .unlockedItems(unlockedItems != null ? unlockedItems : "robot,none,default,새싹 개발자,banner-default")
+                .equippedCursor(equippedCursor != null ? equippedCursor : "cursor-default")
+                .unlockedItems(unlockedItems != null ? unlockedItems : "robot,none,default,새싹 개발자,banner-default,cursor-default")
                 .build();
     }
 }

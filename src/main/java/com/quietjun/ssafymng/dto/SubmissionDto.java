@@ -41,6 +41,7 @@ public class SubmissionDto {
     private String studentAvatar;
     private String studentFrame;
     private String studentTitle;
+    private String studentBanner;
     private Integer earnedPoints;
     private Integer currentPoints;
 }

@@ -598,10 +598,10 @@
             <table class="data-table peer-table">
               <thead>
                 <tr>
-                  <th @click="sortBy('studentName')" class="sortable-th" style="width: 25%;">제출자 ↕</th>
-                  <th @click="sortBy('submittedAt')" class="sortable-th" style="width: 15%; text-align:center;">제출시각 ↕</th>
-                  <th @click="sortBy('executionTime')" class="sortable-th" style="width: 16%; text-align:center;">실행시간(ms) ↕</th>
-                  <th @click="sortBy('memoryUsage')" class="sortable-th" style="width: 16%; text-align:center;">메모리(KB) ↕</th>
+                  <th @click="sortBy('studentName')" class="sortable-th" style="width: 29%;">제출자 ↕</th>
+                  <th @click="sortBy('submittedAt')" class="sortable-th" style="width: 13%; text-align:center;">제출시각 ↕</th>
+                  <th @click="sortBy('executionTime')" class="sortable-th" style="width: 15%; text-align:center;">실행시간(ms) ↕</th>
+                  <th @click="sortBy('memoryUsage')" class="sortable-th" style="width: 15%; text-align:center;">메모리(KB) ↕</th>
                   <th @click="sortBy('codeLength')" class="sortable-th" style="width: 14%; text-align:center;">길이(B) ↕</th>
                   <th style="width: 14%; text-align:center;">상세/코드</th>
                 </tr>
@@ -611,18 +611,32 @@
                   <td colspan="6" style="text-align:center;" class="empty-state">제출된 풀이가 없습니다.</td>
                 </tr>
                 <template v-for="s in sortedSubmissions" :key="s.id">
-                  <tr :class="{ 'row-expanded': expandedSubmissionId === s.id }">
+                  <tr :class="['peer-row', s.studentBanner || 'banner-default', { 'row-expanded': expandedSubmissionId === s.id }]">
                     <td style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                      <div style="display:flex; align-items:center; gap:0.45rem;">
-                        <div :class="['avatar-frame-badge', getStudentFrameClass(s.studentFrame)]" style="width:26px; height:26px; font-size:0.95rem; background:rgba(0,0,0,0.3); flex-shrink:0;" :title="s.studentTitle || '새싹 개발자'">
+                      <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <div :class="['avatar-frame-badge', getStudentFrameClass(s.studentFrame)]" style="width:28px; height:28px; font-size:1rem; background:rgba(0,0,0,0.4); flex-shrink:0;" :title="s.studentTitle || '새싹 개발자'">
                           {{ getStudentAvatarEmoji(s.studentAvatar) }}
                         </div>
-                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                          <strong style="color:#f8fafc; font-size:0.88rem;">{{ s.studentName }}</strong>
-                          <span v-if="s.studentTitle" class="badge" style="font-size:0.72rem; padding:0.1rem 0.45rem; margin-left:4px; background:linear-gradient(135deg, rgba(234, 179, 8, 0.2), rgba(245, 158, 11, 0.25)); color:#fde047; border:1px solid rgba(245, 158, 11, 0.45); border-radius:999px;">
-                            {{ shopStore.getTitleWithIcon(s.studentTitle) }}
-                          </span>
-                          <span style="color:#94a3b8; font-size:0.75rem; margin-left:3px;">({{ s.studentSno || s.sno }})</span>
+                        <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; flex-direction:column; gap:1px;">
+                          <div style="display:flex; align-items:center; gap:0.35rem; flex-wrap:nowrap;">
+                            <strong style="color:#f8fafc; font-size:0.9rem; flex-shrink:0;">{{ s.studentName }}</strong>
+                            <!-- 학생들이 구매한 명품 배너 아이콘 엠블럼 뱃지 (텍스트 잘림 방지 및 직관적 표시) -->
+                            <span 
+                              v-if="s.studentBanner && s.studentBanner !== 'banner-default' && BANNER_MAP[s.studentBanner]" 
+                              :class="['luxury-banner-icon-badge', s.studentBanner]"
+                              :title="`명품 배너: ${getBannerFullName(s.studentBanner)}`"
+                            >
+                              {{ getBannerIcon(s.studentBanner) }}
+                            </span>
+                            <span 
+                              v-if="s.studentTitle" 
+                              class="title-icon-badge" 
+                              :title="`명예 칭호: ${s.studentTitle}`"
+                            >
+                              {{ shopStore.getTitleIcon(s.studentTitle) }}
+                            </span>
+                          </div>
+                          <span style="color:#94a3b8; font-size:0.75rem;">({{ s.studentSno || s.sno }})</span>
                         </div>
                       </div>
                     </td>
@@ -642,10 +656,28 @@
                     </td>
                   </tr>
 
-                  <!-- Expanded Detail Row -->
+                  <!-- Expanded Detail Row with Wide Luxury Banner Header -->
                   <tr v-if="expandedSubmissionId === s.id" class="peer-detail-row">
                     <td colspan="6">
                       <div class="peer-detail-card">
+                        <!-- 학생들이 장착한 배너 스킨을 풀 와이드로 보여주는 헤더 -->
+                        <div :class="['peer-detail-banner-header', s.studentBanner || 'banner-default']">
+                          <div class="banner-header-avatar">
+                            <div :class="['avatar-frame-badge', getStudentFrameClass(s.studentFrame)]">
+                              {{ getStudentAvatarEmoji(s.studentAvatar) }}
+                            </div>
+                          </div>
+                          <div class="banner-header-info">
+                            <div class="banner-header-title-row">
+                              <span class="banner-badge-tag">{{ getBannerFullName(s.studentBanner) }}</span>
+                              <span v-if="s.studentTitle" class="badge" style="background:rgba(234, 179, 8, 0.25); color:#fde047; border:1px solid rgba(245, 158, 11, 0.45); border-radius:999px;">
+                                {{ shopStore.getTitleWithIcon(s.studentTitle) }}
+                              </span>
+                            </div>
+                            <h4 class="banner-header-student-name">{{ s.studentName }} ({{ s.studentSno || s.sno }}) 풀이 분석</h4>
+                          </div>
+                        </div>
+
                         <div class="peer-detail-grid">
                           <div class="peer-detail-items">
                             <div class="peer-detail-item">
@@ -1639,6 +1671,37 @@ const sortedSubmissions = computed(() => {
     return sortAsc.value ? res : -res
   })
 })
+
+const BANNER_MAP: Record<string, { brand: string, name: string, icon: string }> = {
+  'banner-louis-monogram': { brand: 'LV', name: '클래식 모노그램', icon: '💼' },
+  'banner-gucci-stripe': { brand: 'GUCCI', name: '시그니처 레드&그린 웹', icon: '🐍' },
+  'banner-burberry-check': { brand: 'BURBERRY', name: '런던 노바 체크', icon: '🧣' },
+  'banner-goyard-chevron': { brand: 'GOYARD', name: '파리지앵 쉐브론', icon: '⛵' },
+  'banner-chanel-quilted': { brand: 'CHANEL', name: '블랙 퀼팅', icon: '💎' },
+  'banner-dior-oblique': { brand: 'DIOR', name: '오블리크 네이비', icon: '🌟' },
+  'banner-louis-azur': { brand: 'LV', name: '다미에 아주르', icon: '🏖️' },
+  'banner-hermes-orange': { brand: 'HERMÈS', name: '시그니처 오렌지', icon: '🍊' },
+  'banner-tiffany-blue': { brand: 'TIFFANY', name: '아쿠아 민트', icon: '🩵' },
+  'banner-dior-toile': { brand: 'DIOR', name: '트왈 드 주이', icon: '🕊️' },
+  'banner-chanel-tweed': { brand: 'CHANEL', name: '핑크 트위드', icon: '🌸' },
+  'banner-goyard-blanc': { brand: 'GOYARD', name: '고야딘 블랑', icon: '🤍' },
+  'banner-gucci-flora': { brand: 'GUCCI', name: '플로라 블룸', icon: '🌺' }
+}
+
+function getBannerIcon(bannerId?: string): string {
+  if (!bannerId || !BANNER_MAP[bannerId]) return '✨'
+  return BANNER_MAP[bannerId].icon
+}
+
+function getBannerBrandName(bannerId?: string): string {
+  if (!bannerId || !BANNER_MAP[bannerId]) return ''
+  return `${BANNER_MAP[bannerId].icon} ${BANNER_MAP[bannerId].brand}`
+}
+
+function getBannerFullName(bannerId?: string): string {
+  if (!bannerId || !BANNER_MAP[bannerId]) return '기본 배너'
+  return `${BANNER_MAP[bannerId].icon} ${BANNER_MAP[bannerId].brand} ${BANNER_MAP[bannerId].name}`
+}
 
 function handleFileChange(e: any) {
   const file = e.target.files[0]

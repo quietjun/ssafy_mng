@@ -369,6 +369,81 @@ public class PointShopService {
                     .description("그레이스 켈리를 기리는 로맨틱한 파스텔 플라워 & 아이보리 가든 패턴")
                     .price(60)
                     .previewClass("banner-gucci-flora")
+                    .build(),
+
+            // === 6. 마우스 커서 효과 (CURSOR) ===
+            ShopItemDto.builder()
+                    .id("cursor-default")
+                    .name("클래식 포인터 (기본)")
+                    .category("CURSOR")
+                    .icon("🖱️")
+                    .description("단정하고 익숙한 기본 시스템 커서")
+                    .price(0)
+                    .defaultOwned(true)
+                    .previewClass("cursor-default")
+                    .build(),
+            ShopItemDto.builder()
+                    .id("cursor-magic-star")
+                    .name("매직 스타 완드")
+                    .category("CURSOR")
+                    .icon("✨")
+                    .description("마우스를 움직일 때마다 영롱한 별빛과 오로라 파티클이 쏟아집니다")
+                    .price(40)
+                    .previewClass("cursor-magic-star")
+                    .build(),
+            ShopItemDto.builder()
+                    .id("cursor-cyber-crosshair")
+                    .name("사이버 네온 타겟")
+                    .category("CURSOR")
+                    .icon("🎯")
+                    .description("사이버펑크 감성의 미래형 크로스헤어 조준선과 푸른 홀로그램 잔상")
+                    .price(50)
+                    .previewClass("cursor-cyber-crosshair")
+                    .build(),
+            ShopItemDto.builder()
+                    .id("cursor-pixel-sword")
+                    .name("8비트 용사의 검")
+                    .category("CURSOR")
+                    .icon("🗡️")
+                    .description("레트로 RPG 감성의 전설의 용사 도트 픽셀 소드")
+                    .price(50)
+                    .previewClass("cursor-pixel-sword")
+                    .build(),
+            ShopItemDto.builder()
+                    .id("cursor-cat-paw")
+                    .name("냥냥 젤리 펀치")
+                    .category("CURSOR")
+                    .icon("🐾")
+                    .description("화면을 누빌 때마다 사랑스러운 핑크빛 젤리 발자국이 퐁퐁 솟아납니다")
+                    .price(40)
+                    .previewClass("cursor-cat-paw")
+                    .build(),
+            ShopItemDto.builder()
+                    .id("cursor-fire-flame")
+                    .name("피닉스 플레임")
+                    .category("CURSOR")
+                    .icon("🔥")
+                    .description("타오르는 붉은 불꽃과 열정의 엠버 파티클이 궤적을 그립니다")
+                    .price(60)
+                    .previewClass("cursor-fire-flame")
+                    .build(),
+            ShopItemDto.builder()
+                    .id("cursor-code-terminal")
+                    .name("해커 터미널 글리치")
+                    .category("CURSOR")
+                    .icon("⚡")
+                    .description("매트릭스 디지털 그린 코드와 짜릿한 번개 스파크 효과")
+                    .price(50)
+                    .previewClass("cursor-code-terminal")
+                    .build(),
+            ShopItemDto.builder()
+                    .id("cursor-bubble-pop")
+                    .name("아쿠아 레인보우 버블")
+                    .category("CURSOR")
+                    .icon("🫧")
+                    .description("영롱한 무지갯빛 물방울들이 몽실몽실 피어나는 청량한 커서")
+                    .price(45)
+                    .previewClass("cursor-bubble-pop")
                     .build()
     );
 
@@ -402,6 +477,7 @@ public class PointShopService {
                 .equippedTheme(student.getEquippedTheme() != null ? student.getEquippedTheme() : "default")
                 .equippedTitle(student.getEquippedTitle() != null ? student.getEquippedTitle() : "새싹 개발자")
                 .equippedBanner(student.getEquippedBanner() != null ? student.getEquippedBanner() : "banner-default")
+                .equippedCursor(student.getEquippedCursor() != null ? student.getEquippedCursor() : "cursor-default")
                 .unlockedItemIds(new ArrayList<>(unlockedSet))
                 .build();
     }
@@ -457,6 +533,7 @@ public class PointShopService {
             case "THEME" -> student.setEquippedTheme(itemId);
             case "TITLE" -> student.setEquippedTitle(itemId);
             case "BANNER" -> student.setEquippedBanner(itemId);
+            case "CURSOR" -> student.setEquippedCursor(itemId);
             default -> throw new IllegalArgumentException("알 수 없는 카테고리입니다: " + category);
         }
 
@@ -482,6 +559,7 @@ public class PointShopService {
                         .equippedTheme(s.getEquippedTheme() != null ? s.getEquippedTheme() : "default")
                         .equippedTitle(s.getEquippedTitle() != null ? s.getEquippedTitle() : "새싹 개발자")
                         .equippedBanner(s.getEquippedBanner() != null ? s.getEquippedBanner() : "banner-default")
+                        .equippedCursor(s.getEquippedCursor() != null ? s.getEquippedCursor() : "cursor-default")
                         .build())
                 .collect(Collectors.toList());
     }

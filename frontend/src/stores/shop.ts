@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/utils/api'
+import { cursorManager } from '@/utils/cursorManager'
 
 export interface ShopItem {
   id: string
   name: string
-  category: 'AVATAR' | 'FRAME' | 'THEME' | 'TITLE' | 'BANNER'
+  category: 'AVATAR' | 'FRAME' | 'THEME' | 'TITLE' | 'BANNER' | 'CURSOR'
   icon?: string
   description?: string
   price: number
@@ -24,6 +25,7 @@ export interface ShopProfile {
   equippedTheme: string
   equippedTitle: string
   equippedBanner?: string
+  equippedCursor?: string
   unlockedItemIds: string[]
 }
 
@@ -54,6 +56,17 @@ const THEME_MAP: Record<string, string> = {
   'aurora': '🔮'
 }
 
+const CURSOR_MAP: Record<string, string> = {
+  'cursor-default': '🖱️',
+  'cursor-magic-star': '✨',
+  'cursor-cyber-crosshair': '🎯',
+  'cursor-pixel-sword': '🗡️',
+  'cursor-cat-paw': '🐾',
+  'cursor-fire-flame': '🔥',
+  'cursor-code-terminal': '⚡',
+  'cursor-bubble-pop': '🫧'
+}
+
 export const useShopStore = defineStore('shop', () => {
   const catalog = ref<ShopItem[]>([])
   const profile = ref<ShopProfile | null>({
@@ -66,12 +79,13 @@ export const useShopStore = defineStore('shop', () => {
     equippedTheme: localStorage.getItem('user_theme') || 'default',
     equippedTitle: localStorage.getItem('cached_equipped_title') || '새싹 개발자',
     equippedBanner: localStorage.getItem('cached_equipped_banner') || 'banner-default',
+    equippedCursor: localStorage.getItem('cached_equipped_cursor') || 'cursor-default',
     unlockedItemIds: []
   })
   const ranking = ref<ShopProfile[]>([])
   const isLoading = ref(false)
   const isOpenModal = ref(false)
-  const activeTab = ref<'AVATAR' | 'FRAME' | 'THEME' | 'TITLE' | 'BANNER' | 'RANKING'>('AVATAR')
+  const activeTab = ref<'AVATAR' | 'FRAME' | 'THEME' | 'TITLE' | 'BANNER' | 'CURSOR' | 'RANKING'>('AVATAR')
 
   function getAvatarIcon(avatarId?: string): string {
     if (!avatarId) return '🤖'
@@ -98,6 +112,13 @@ export const useShopStore = defineStore('shop', () => {
     if (THEME_MAP[themeId]) return THEME_MAP[themeId]
     const item = catalog.value.find(i => i.id === themeId && i.category === 'THEME')
     return item?.icon || '🎨'
+  }
+
+  function getCursorIcon(cursorId?: string): string {
+    if (!cursorId) return '🖱️'
+    if (CURSOR_MAP[cursorId]) return CURSOR_MAP[cursorId]
+    const item = catalog.value.find(i => i.id === cursorId && i.category === 'CURSOR')
+    return item?.icon || '🖱️'
   }
 
   function getFrameClass(frameId?: string): string {
@@ -134,6 +155,10 @@ export const useShopStore = defineStore('shop', () => {
     return profile.value?.equippedBanner || localStorage.getItem('cached_equipped_banner') || 'banner-default'
   })
 
+  const currentCursorIcon = computed(() => {
+    return getCursorIcon(profile.value?.equippedCursor)
+  })
+
   function applyTheme(themeId?: string) {
     const targetTheme = themeId || profile.value?.equippedTheme || localStorage.getItem('user_theme') || 'default'
     if (targetTheme === 'default') {
@@ -142,6 +167,12 @@ export const useShopStore = defineStore('shop', () => {
       document.documentElement.setAttribute('data-theme', targetTheme)
     }
     localStorage.setItem('user_theme', targetTheme)
+  }
+
+  function applyCursor(cursorId?: string) {
+    const target = cursorId || profile.value?.equippedCursor || localStorage.getItem('cached_equipped_cursor') || 'cursor-default'
+    cursorManager.setCursor(target)
+    localStorage.setItem('cached_equipped_cursor', target)
   }
 
   async function loadCatalog() {
@@ -165,9 +196,11 @@ export const useShopStore = defineStore('shop', () => {
         localStorage.setItem('cached_equipped_frame', data.equippedFrame || 'none')
         localStorage.setItem('cached_equipped_title', data.equippedTitle || '새싹 개발자')
         localStorage.setItem('cached_equipped_banner', data.equippedBanner || 'banner-default')
+        localStorage.setItem('cached_equipped_cursor', data.equippedCursor || 'cursor-default')
         if (data.equippedTheme) {
           applyTheme(data.equippedTheme)
         }
+        applyCursor(data.equippedCursor)
       }
     } catch (e) {
       console.warn('Shop profile load failed (maybe guest or admin):', e)
@@ -192,6 +225,7 @@ export const useShopStore = defineStore('shop', () => {
         localStorage.setItem('cached_equipped_frame', data.equippedFrame || 'none')
         localStorage.setItem('cached_equipped_title', data.equippedTitle || '새싹 개발자')
         localStorage.setItem('cached_equipped_banner', data.equippedBanner || 'banner-default')
+        localStorage.setItem('cached_equipped_cursor', data.equippedCursor || 'cursor-default')
       }
       return { success: true }
     } catch (e: any) {
@@ -209,9 +243,12 @@ export const useShopStore = defineStore('shop', () => {
         localStorage.setItem('cached_equipped_frame', data.equippedFrame || 'none')
         localStorage.setItem('cached_equipped_title', data.equippedTitle || '새싹 개발자')
         localStorage.setItem('cached_equipped_banner', data.equippedBanner || 'banner-default')
+        localStorage.setItem('cached_equipped_cursor', data.equippedCursor || 'cursor-default')
       }
       if (category === 'THEME') {
         applyTheme(itemId)
+      } else if (category === 'CURSOR') {
+        applyCursor(itemId)
       }
       return { success: true }
     } catch (e: any) {
@@ -220,7 +257,7 @@ export const useShopStore = defineStore('shop', () => {
     }
   }
 
-  function openShop(tab: 'AVATAR' | 'FRAME' | 'THEME' | 'TITLE' | 'BANNER' | 'RANKING' = 'AVATAR') {
+  function openShop(tab: 'AVATAR' | 'FRAME' | 'THEME' | 'TITLE' | 'BANNER' | 'CURSOR' | 'RANKING' = 'AVATAR') {
     activeTab.value = tab
     isOpenModal.value = true
     loadCatalog()
@@ -248,12 +285,15 @@ export const useShopStore = defineStore('shop', () => {
     currentTitleIcon,
     currentThemeIcon,
     currentBannerClass,
+    currentCursorIcon,
     getAvatarIcon,
     getFrameClass,
     getTitleIcon,
     getTitleWithIcon,
     getThemeIcon,
+    getCursorIcon,
     applyTheme,
+    applyCursor,
     loadCatalog,
     loadProfile,
     loadRanking,
